@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { registerStoreRepo } = require("../repositories/authRepo")
+const { registerStoreRepo, addCashierRepo } = require("../repositories/authRepo")
 
 const registerStoreC = async (req, res, next) => {
   const connection = await connectDb()
@@ -17,4 +17,21 @@ const registerStoreC = async (req, res, next) => {
   }
 }
 
-module.exports = { registerStoreC }
+
+const addCashierC = async (req, res, next) => {
+  const connection = await connectDb()
+  try {
+    const { email, name, password, store_id } = req.body
+
+    const result = await addCashierRepo(email, name, password, store_id)
+
+    await connection.commit()
+
+    return res.status(201).send({ 'data': { 'inserted_id': result } })
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  }
+}
+
+module.exports = { registerStoreC, addCashierC }

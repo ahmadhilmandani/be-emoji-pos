@@ -29,7 +29,7 @@ const registerStoreRepo = async (email, name, password, store_name, store_addres
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [username, name, email, hashedPassword])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, 'admin'])
 
       if (result.affectedRows) {
         const sql_statement_store = `
@@ -64,4 +64,60 @@ const registerStoreRepo = async (email, name, password, store_name, store_addres
   }
 }
 
-module.exports = { registerStoreRepo }
+
+const addCashierRepo = async (name, email, password, storeId) => {
+  const connection = await connectDb()
+
+  try {
+    const saltRounds = 10
+
+    const sql_statement = `
+      INSERT INTO
+        users
+        (
+          name,
+          email, 
+          password
+        )
+      VALUES
+        (
+          ?,
+          ?,
+          ?,
+          ?,
+          ?
+        )
+    `
+    const hashedPassword = await bcrypt.hash(password, saltRounds)
+
+    if (hashedPassword) {
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword])
+
+      if (result.affectedRows) {
+        const sql_statement_cashier_store = `
+          INSERT INTO
+            cashier_stores
+            (
+              user_id,
+              store_id
+            )
+          VALUES
+            (
+              ?,
+              ?
+            )
+        `
+        const [resultCashier] = await connection.execute(sql_statement_cashier_store, [result.insertId, storeId])
+
+        if (resultCashier.affectedRows) {
+          return result.insertId
+        }
+      }
+    }
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+
+module.exports = { registerStoreRepo, addCashierRepo }
