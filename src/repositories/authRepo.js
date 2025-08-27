@@ -2,7 +2,7 @@ const connectDb = require('../config/db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
-const registerRepo = async (email, name, password) => {
+const registerStoreRepo = async (email, name, password, store_name, store_address, store_phone) => {
   const connection = await connectDb()
   try {
     const saltRounds = 10
@@ -11,11 +11,10 @@ const registerRepo = async (email, name, password) => {
       INSERT INTO
         users
         (
-          username,
-          name, 
+          name,
           email, 
-          password,
-          created_at
+          password, 
+          user_role
         )
       VALUES
         (
@@ -30,13 +29,39 @@ const registerRepo = async (email, name, password) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [username, name, email, hashedPassword, currentDatetime])
+      const [result] = await connection.execute(sql_statement, [username, name, email, hashedPassword])
 
-      return result
+      if (result.affectedRows) {
+        const sql_statement_store = `
+          INSERT INTO
+            stores
+            (
+              name,
+              address, 
+              phone, 
+              owner_id
+            )
+          VALUES
+            (
+              ?,
+              ?,
+              ?,
+              ?,
+              ?
+            )
+        `
+        const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone])
+
+        return {
+          'user_id': result.insertId,
+          'store_id': resStore.insertId
+        }
+      }
+
     }
   } catch (error) {
     throw new Error(error)
   }
 }
 
-module.exports = { registerRepo }
+module.exports = { registerStoreRepo }
