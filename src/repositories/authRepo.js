@@ -121,4 +121,35 @@ const addCashierRepo = async (connection, name, email, password, storeId) => {
 }
 
 
-module.exports = { registerStoreRepo, addCashierRepo }
+const loginRepo = async (connection, email, password) => {
+  try {
+    const sql_statement = `
+      SELECT
+        *
+      FROM
+        users
+      WHERE
+        email = ?
+      LIMIT 1
+    `
+
+    const [result] = await connection.execute(sql_statement, [email])
+
+    if (result.length == 0) {
+      return []
+    }
+
+    const match = await bcrypt.compare(password, result[0].password)
+    if (match) {
+      return result
+    }
+
+    return []
+
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+
+module.exports = { registerStoreRepo, addCashierRepo, loginRepo }
