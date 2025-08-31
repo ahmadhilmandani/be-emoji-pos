@@ -68,12 +68,10 @@ const loginC = async (req, res, next) => {
     }
 
     const result = {
-      user_id: getUser[0].id_user,
+      user_id: getUser[0].id,
       name: getUser[0].name,
       email: getUser[0].email,
-      address: getUser[0].address,
-      alergy: getUser[0].alergies,
-      is_admin: getUser[0].is_admin
+      role: getUser[0].user_role
     }
 
     const token = jwt.sign({ user: result }, "PASSWORD", { expiresIn: 86400 })
@@ -81,7 +79,7 @@ const loginC = async (req, res, next) => {
     if (getUser) {
       result['token'] = token
       req.result = result
-      return res.status(201).send({ 'data': result })
+      return res.status(201).send({ 'user': result })
     }
 
 
