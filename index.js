@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use(log)
 app.use('/api/auth', authRoute)
-app.use('/api/auth', errorHanlder)
+app.use(errorHanlder)
 
 app.listen(process.env.PORT || 8000, () => {
   console.log(`running on http://localhost:${process.env.PORT || 8000}`)

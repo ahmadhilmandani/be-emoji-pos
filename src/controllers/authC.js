@@ -3,10 +3,16 @@ const { registerStoreRepo, addCashierRepo } = require("../repositories/authRepo"
 
 const registerStoreC = async (req, res, next) => {
   const connection = await connectDb()
-  try {
-    const { email, name, password, store_name, store_address, store_phone } = req.body
 
-    const result = await registerStoreRepo(email, name, password, store_name, store_address, store_phone)
+  try {
+    await connection.beginTransaction()
+    
+    const { email, name, password, store_name, store_address, store_phone } = req.body
+    const age = req.body?.age
+    const sex = req.body?.sex
+    const phone = req.body?.phone
+
+    const result = await registerStoreRepo(connection, email, name, password, age, sex, phone, store_name, store_address, store_phone)
 
     await connection.commit()
 
@@ -14,6 +20,8 @@ const registerStoreC = async (req, res, next) => {
   } catch (error) {
     await connection.rollback()
     next(error)
+  } finally {
+    connection.release()
   }
 }
 

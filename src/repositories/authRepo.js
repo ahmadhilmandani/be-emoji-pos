@@ -1,9 +1,8 @@
-const connectDb = require('../config/db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
-const registerStoreRepo = async (email, name, password, store_name, store_address, store_phone) => {
-  const connection = await connectDb()
+const registerStoreRepo = async (connection, email, name, password, age, sex, phone, store_name, store_address, store_phone) => {
+
   try {
     const saltRounds = 10
 
@@ -14,11 +13,16 @@ const registerStoreRepo = async (email, name, password, store_name, store_addres
           name,
           email, 
           password, 
-          user_role
+          user_role,
+          age,
+          sex,
+          phone
         )
       VALUES
         (
           ?,
+          ?, 
+          ?, 
           ?,
           ?,
           ?,
@@ -29,7 +33,7 @@ const registerStoreRepo = async (email, name, password, store_name, store_addres
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, 'admin'])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, 'admin', age, sex, phone])
 
       if (result.affectedRows) {
         const sql_statement_store = `
@@ -46,11 +50,10 @@ const registerStoreRepo = async (email, name, password, store_name, store_addres
               ?,
               ?,
               ?,
-              ?,
               ?
             )
         `
-        const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone])
+        const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone, result.insertId])
 
         return {
           'user_id': result.insertId,
