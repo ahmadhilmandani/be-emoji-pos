@@ -28,17 +28,23 @@ const registerStoreC = async (req, res, next) => {
 
 const addCashierC = async (req, res, next) => {
   const connection = await connectDb()
+
   try {
+    await connection.beginTransaction()
+
     const { email, name, password, store_id } = req.body
 
-    const result = await addCashierRepo(email, name, password, store_id)
+    const result = await addCashierRepo(connection, email, name, password, store_id)
 
     await connection.commit()
 
     return res.status(201).send({ 'data': { 'inserted_id': result } })
+    
   } catch (error) {
     await connection.rollback()
     next(error)
+  } finally {
+    connection.release()
   }
 }
 

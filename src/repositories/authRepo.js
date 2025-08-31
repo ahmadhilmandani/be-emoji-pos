@@ -68,9 +68,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
 }
 
 
-const addCashierRepo = async (name, email, password, storeId) => {
-  const connection = await connectDb()
-
+const addCashierRepo = async (connection, name, email, password, storeId) => {
   try {
     const saltRounds = 10
 
