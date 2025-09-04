@@ -1,0 +1,12 @@
+- bahan baku
+
+- produk :
+	- produk jadi (pakaian, kosmetik, dll)
+	- produk olahan (makanan, minuman, dll)
+		perlu input bahan baku, a
+
+- penjualan bahan baku
+
+- penjualan produk
+
+- pembelian bahan baku
