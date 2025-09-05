@@ -23,7 +23,7 @@ const registerStoreC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.release()
+    connection.end()
   }
 }
 
@@ -46,7 +46,7 @@ const addCashierC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.release()
+    connection.end()
   }
 }
 
@@ -89,7 +89,7 @@ const loginC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.release()
+    connection.end()
   }
 }
 

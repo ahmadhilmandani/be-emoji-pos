@@ -36,11 +36,11 @@ const detailSupplierRepo = async (connection, id) => {
   }
 }
 
-const addSupplierRepo = async (connection, name, phone, address) => {
+const addProductRepo = async (connection, store_id, name, type, price, stock, unit, ingredient) => {
   try {
     const sql_statement = `
       INSERT INTO
-        suppliers
+        supplier
         (
           name,
           phone,
@@ -54,10 +54,13 @@ const addSupplierRepo = async (connection, name, phone, address) => {
         )
     `
     const [result] = await connection.execute(sql_statement, [name, phone, address])
-    return result.insertId
+    if (result && ingredient.length > 0) {
+      
+    }
+    return result.insertedId
   } catch (error) {
-    throw error
+    throw new Error(error)
   }
 }
 
-module.exports = { allSupplierRepo, detailSupplierRepo, addSupplierRepo }
+module.exports = { allSupplierRepo, detailSupplierRepo, addProductRepo }

@@ -3,6 +3,7 @@ const cors = require('cors')
 require('dotenv').config()
 const authRoute = require('./src/routes/authRoute');
 const supplierRoute = require('./src/routes/supplierRoute');
+const productRoute = require('./src/routes/productRoute');
 const { errorHanlder } = require('./src/middleware/errorHanlder');
 const { log } = require('./src/middleware/log');
 
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(log)
 app.use('/api/auth', authRoute)
 app.use('/api/supplier', supplierRoute)
+app.use('/api/product', productRoute)
 app.use(errorHanlder)
 
 app.listen(process.env.PORT || 8000, () => {
