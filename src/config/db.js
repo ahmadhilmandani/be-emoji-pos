@@ -1,10 +1,10 @@
 const mysql = require('mysql2/promise')
 
-let connection 
+let pool 
 
 async function connectDb() {
-  if (!connection) {    
-    connection =  await mysql.createConnection(
+  if (!pool) {    
+    pool =  await mysql.createPool(
       {
         host: process.env.MYSQL_HOST,
         user: process.env.MYSQL_USERNAME,
@@ -14,7 +14,7 @@ async function connectDb() {
       }
     )
   }
-  return connection
+  return pool
 }
 
 module.exports = connectDb
