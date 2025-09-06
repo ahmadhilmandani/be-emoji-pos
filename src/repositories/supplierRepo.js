@@ -4,16 +4,14 @@ const allSupplierRepo = async (connection, limit, offset) => {
       SELECT
         *
       FROM
-        supplier
-      LIMIT
-        ?
-      OFFSET
-        ? 
+        suppliers
+      LIMIT ?
+      OFFSET ?
     `
-    const [result] = await connection.execute(sql_statement, [limit, offset])
+    const [result] = await connection.execute(sql_statement, [limit.toString(), offset.toString()])
     return result
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -32,7 +30,7 @@ const detailSupplierRepo = async (connection, id) => {
     const [result] = await connection.execute(sql_statement, [id])
     return result
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
