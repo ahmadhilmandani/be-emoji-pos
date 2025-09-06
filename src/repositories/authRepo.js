@@ -63,7 +63,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
 
     }
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -116,7 +116,7 @@ const addCashierRepo = async (connection, name, email, password, storeId) => {
       }
     }
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -147,7 +147,7 @@ const loginRepo = async (connection, email, password) => {
     return []
 
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 

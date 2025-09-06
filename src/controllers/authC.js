@@ -4,11 +4,10 @@ const jwt = require('jsonwebtoken')
 
 
 const registerStoreC = async (req, res, next) => {
-  const connection = await connectDb()
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
-    await connection.beginTransaction()
-
     const { email, name, password, store_name, store_address, store_phone } = req.body
     const age = req.body?.age
     const sex = req.body?.sex
@@ -23,17 +22,16 @@ const registerStoreC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.end()
+    await connection.release()
   }
 }
 
 
 const addCashierC = async (req, res, next) => {
-  const connection = await connectDb()
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
-    await connection.beginTransaction()
-
     const { email, name, password, store_id } = req.body
 
     const result = await addCashierRepo(connection, email, name, password, store_id)
@@ -51,11 +49,10 @@ const addCashierC = async (req, res, next) => {
 }
 
 const loginC = async (req, res, next) => {
-  const connection = await connectDb()
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
-    await connection.beginTransaction()
-
     const { email, password } = req.body
 
     const getUser = await loginRepo(connection, email, password)
@@ -71,7 +68,8 @@ const loginC = async (req, res, next) => {
       user_id: getUser[0].id,
       name: getUser[0].name,
       email: getUser[0].email,
-      role: getUser[0].user_role
+      role: getUser[0].user_role,
+      store_id: getUser[0].store_id
     }
 
     const token = jwt.sign({ user: result }, "PASSWORD", { expiresIn: 86400 })
@@ -82,14 +80,13 @@ const loginC = async (req, res, next) => {
       return res.status(201).send({ 'user': result })
     }
 
-
     return res.status(201).send()
 
   } catch (error) {
     await connection.rollback()
     next(error)
   } finally {
-    connection.end()
+    await connection.release()
   }
 }
 
