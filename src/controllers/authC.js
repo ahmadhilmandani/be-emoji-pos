@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { registerStoreRepo, addCashierRepo, loginRepo } = require("../repositories/authRepo")
+const { registerStoreRepo, loginRepo, addEmployeeRepo } = require("../repositories/authRepo")
 const jwt = require('jsonwebtoken')
 
 
@@ -27,14 +27,14 @@ const registerStoreC = async (req, res, next) => {
 }
 
 
-const addCashierC = async (req, res, next) => {
+const addEmployeeC = async (req, res, next) => {
   const pool = await connectDb()
   const connection = await pool.getConnection()
 
   try {
     const { email, name, password, store_id } = req.body
 
-    const result = await addCashierRepo(connection, email, name, password, store_id)
+    const result = await addEmployeeRepo(connection, email, name, password, store_id)
 
     await connection.commit()
 
@@ -90,4 +90,4 @@ const loginC = async (req, res, next) => {
   }
 }
 
-module.exports = { registerStoreC, addCashierC, loginC }
+module.exports = { registerStoreC, addEmployeeC, loginC }
