@@ -1,9 +1,9 @@
 const express = require('express');
-const { addProductC } = require('../controllers/productC ');
+const { addProductC, getProducts } = require('../controllers/productC ');
 
 const router = express.Router()
 
-router.get('/', ()=>{})
+router.get('/', getProducts)
 router.get('/:id', ()=>{})
 router.post('/', addProductC)
 

@@ -1,16 +1,25 @@
-const allSupplierRepo = async (connection, limit, offset) => {
+const allProdutcs = async (connection, limit, offset, type) => {
+  console.log(limit)
+  console.log(offset)
   try {
-    const sql_statement = `
-      SELECT
-        *
-      FROM
-        supplier
-      LIMIT
-        ?
-      OFFSET
-        ? 
-    `
-    const [result] = await connection.execute(sql_statement, [limit, offset])
+    let sql_statement = `SELECT * FROM products`
+    const sqlParams = []
+
+    if (type) {
+      sql_statement += ` WHERE type = ?`
+      sqlParams.push(type)
+    }
+
+    sql_statement += ` LIMIT ? OFFSET ?`
+
+    console.log(sql_statement)
+    
+    sqlParams.push(limit.toString())
+    sqlParams.push(offset.toString())
+
+    console.log(sqlParams)
+
+    const [result] = await connection.execute(sql_statement, sqlParams)
     return result
   } catch (error) {
     throw new Error(error)
@@ -40,27 +49,33 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
   try {
     const sql_statement = `
       INSERT INTO
-        supplier
+        products
         (
+          store_id,
           name,
-          phone,
-          address
+          type,
+          price,
+          stock,
+          unit
         )
       VALUES
         (
           ?,
           ?,
+          ?,
+          ?,
+          ?,
           ?
         )
     `
-    const [result] = await connection.execute(sql_statement, [name, phone, address])
+    const [result] = await connection.execute(sql_statement, [1, name, type, price, stock, unit])
     if (result && ingredient.length > 0) {
       
     }
-    return result.insertedId
+    return result.insertId
   } catch (error) {
     throw new Error(error)
   }
 }
 
-module.exports = { allSupplierRepo, detailSupplierRepo, addProductRepo }
+module.exports = { allProdutcs, detailSupplierRepo, addProductRepo }

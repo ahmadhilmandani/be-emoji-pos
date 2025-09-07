@@ -1,33 +1,36 @@
 const connectDb = require("../config/db")
-const { addProductRepo } = require("../repositories/productRepo")
-const { addSupplierRepo, detailSupplierRepo, allSupplierRepo } = require("../repositories/supplierRepo")
+const { addProductRepo, allProdutcs } = require("../repositories/productRepo")
+const { addSupplierRepo, detailSupplierRepo } = require("../repositories/supplierRepo")
 
-const getAllSupplierC = async (req, res, next) => {
-  const connection = connectDb()
+const getProducts = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
-    const { page, limit } = req.query
+    let { page, limit } = req.query
     page = parseInt(page) || 1
     limit = parseInt(limit) || 10
     const offset = (page - 1) * limit
+    const type = req.query?.type || null
 
-    const result = await allSupplierRepo(connection, limit, offset)
+    const result = await allProdutcs(connection, limit, offset, type)
 
     return res.status(200).json({
       'is_error': false,
-      'supplier': result
+      'products': result
     })
 
   } catch (error) {
     await connection.rollback()
     next(error)
   } finally {
-    connection.end()
+    await connection.release()
   }
 }
 
 const getDetailSupplierC = async (req, res, next) => {
-  const connection = connectDb()
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
     const { id } = req.params
@@ -42,18 +45,19 @@ const getDetailSupplierC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.end()
+    await connection.release()
   }
 }
 
 const addProductC = async (req, res, next) => {
-  const connection = await connectDb()
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
     const { store_id, name, type, price, stock, unit } = req.body
     const ingredient = []
-    
-    
+
+
     if (type === 'produk_olahan') {
       if (req.body.hasOwnProperty('ingredient')) {
         ingredient.push(req.body.ingredient)
@@ -74,9 +78,8 @@ const addProductC = async (req, res, next) => {
     await connection.rollback()
     next(error)
   } finally {
-    connection.end()
-    
+    await connection.release()
   }
 }
 
-module.exports = { getAllSupplierC, getDetailSupplierC, addProductC }
+module.exports = { getProducts, getDetailSupplierC, addProductC }
