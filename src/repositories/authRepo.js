@@ -141,7 +141,35 @@ const loginRepo = async (connection, email, password) => {
 
     const match = await bcrypt.compare(password, result[0].password)
     if (match) {
-      return result
+      if (result[0].user_role === 'admin') {
+        const sql_statement = `
+          SELECT
+            id
+          FROM
+            stores
+          WHERE
+            owner_id = ?
+          LIMIT 1
+        `
+
+        const [resultStore] = await connection.execute(sql_statement, [result[0].id])
+        result[0].store_id = resultStore[0].id
+        return result
+      } else {
+        const sql_statement = `
+          SELECT
+            store_id
+          FROM
+            cashier_stores
+          WHERE
+            user_id = ?
+          LIMIT 1
+        `
+
+        const [resultStore] = await connection.execute(sql_statement, [result[0].id])
+        result[0].store_id = resultStore[0].store_id
+        return result
+      }
     }
 
     return []

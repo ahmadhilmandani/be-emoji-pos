@@ -1,6 +1,4 @@
 const allProdutcs = async (connection, limit, offset, type) => {
-  console.log(limit)
-  console.log(offset)
   try {
     let sql_statement = `SELECT * FROM products`
     const sqlParams = []
