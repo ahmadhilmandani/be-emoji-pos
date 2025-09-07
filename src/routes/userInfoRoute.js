@@ -5,6 +5,8 @@ const router = express.Router()
 
 router.get('/', getAllUserInfo)
 
+// router.post('/', getAllUserInfo)
+
 // router.post('/:id', addCashierC)
 
 

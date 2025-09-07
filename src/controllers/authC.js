@@ -34,7 +34,7 @@ const addEmployeeC = async (req, res, next) => {
   try {
     const { email, name, password, store_id, user_role } = req.body
 
-    const result = await addEmployeeRepo(connection, email, name, password, store_id, user_role)
+    const result = await addEmployeeRepo(connection, name, email, password, store_id, user_role)
 
     await connection.commit()
 
