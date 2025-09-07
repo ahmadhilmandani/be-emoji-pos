@@ -4,6 +4,7 @@ require('dotenv').config()
 const authRoute = require('./src/routes/authRoute');
 const supplierRoute = require('./src/routes/supplierRoute');
 const productRoute = require('./src/routes/productRoute');
+const userInfoRoute = require('./src/routes/userInfoRoute');
 const { errorHanlder } = require('./src/middleware/errorHanlder');
 const { log } = require('./src/middleware/log');
 
@@ -17,6 +18,8 @@ app.use(log)
 app.use('/api/auth', authRoute)
 app.use('/api/supplier', supplierRoute)
 app.use('/api/product', productRoute)
+app.use('/api/user-info', userInfoRoute)
+
 app.use(errorHanlder)
 
 app.listen(process.env.PORT || 8000, () => {

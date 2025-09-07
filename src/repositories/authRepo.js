@@ -43,7 +43,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
               name,
               address, 
               phone, 
-              owner_id
+              user_id
             )
           VALUES
             (
@@ -54,6 +54,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
             )
         `
         const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone, result.insertId])
+        await connection.execute(`UPDATE users SET store_id = ? WHERE id = ?`, [resStore.insertId, result.insertId])
 
         return {
           'user_id': result.insertId,
@@ -78,11 +79,11 @@ const addCashierRepo = async (connection, name, email, password, storeId) => {
         (
           name,
           email, 
-          password
+          password,
+          store_id
         )
       VALUES
         (
-          ?,
           ?,
           ?,
           ?,
@@ -92,28 +93,10 @@ const addCashierRepo = async (connection, name, email, password, storeId) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, storeId])
+      
+      return result
 
-      if (result.affectedRows) {
-        const sql_statement_cashier_store = `
-          INSERT INTO
-            cashier_stores
-            (
-              user_id,
-              store_id
-            )
-          VALUES
-            (
-              ?,
-              ?
-            )
-        `
-        const [resultCashier] = await connection.execute(sql_statement_cashier_store, [result.insertId, storeId])
-
-        if (resultCashier.affectedRows) {
-          return result.insertId
-        }
-      }
     }
   } catch (error) {
     throw error
@@ -148,7 +131,7 @@ const loginRepo = async (connection, email, password) => {
           FROM
             stores
           WHERE
-            owner_id = ?
+            user_id = ?
           LIMIT 1
         `
 
