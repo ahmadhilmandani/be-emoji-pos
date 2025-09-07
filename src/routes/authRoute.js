@@ -1,9 +1,9 @@
 const express = require('express');
-const { registerC, registerStoreC, loginC, addEmployeeC } = require('../controllers/authC');
+const { loginC, addEmployeeC, addOwnerStoreC } = require('../controllers/authC');
 
 const router = express.Router()
 
-router.post('/register-store', registerStoreC)
+router.post('/add-owner-store', addOwnerStoreC)
 
 router.post('/add-employee', addEmployeeC)
 

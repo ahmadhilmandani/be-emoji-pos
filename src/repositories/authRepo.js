@@ -1,8 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
-const registerStoreRepo = async (connection, email, name, password, age, sex, phone, store_name, store_address, store_phone) => {
-
+const addOwnerRepo = async (connection, email, name, password, age, sex, phone, store_name, store_address, store_phone) => {
   try {
     const saltRounds = 10
 
@@ -33,7 +32,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, 'admin', age, sex, phone])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, 'owner', age, sex, phone])
 
       if (result.affectedRows) {
         const sql_statement_store = `
@@ -42,18 +41,16 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
             (
               name,
               address, 
-              phone, 
-              user_id
+              phone
             )
           VALUES
             (
               ?,
               ?,
-              ?,
               ?
             )
         `
-        const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone, result.insertId])
+        const [resStore] = await connection.execute(sql_statement_store, [store_name, store_address, store_phone])
         await connection.execute(`UPDATE users SET store_id = ? WHERE id = ?`, [resStore.insertId, result.insertId])
 
         return {
@@ -69,7 +66,7 @@ const registerStoreRepo = async (connection, email, name, password, age, sex, ph
 }
 
 
-const addEmployeeRepo = async (connection, name, email, password, storeId) => {
+const addEmployeeRepo = async (connection, name, email, password, storeId, userRole) => {
   try {
     const saltRounds = 10
 
@@ -80,10 +77,12 @@ const addEmployeeRepo = async (connection, name, email, password, storeId) => {
           name,
           email, 
           password,
-          store_id
+          store_id,
+          user_role
         )
       VALUES
         (
+          ?,
           ?,
           ?,
           ?,
@@ -93,10 +92,9 @@ const addEmployeeRepo = async (connection, name, email, password, storeId) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, storeId])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, storeId, userRole])
       
-      return result
-
+      return result.insertId
     }
   } catch (error) {
     throw error
@@ -124,35 +122,7 @@ const loginRepo = async (connection, email, password) => {
 
     const match = await bcrypt.compare(password, result[0].password)
     if (match) {
-      if (result[0].user_role === 'admin') {
-        const sql_statement = `
-          SELECT
-            id
-          FROM
-            stores
-          WHERE
-            user_id = ?
-          LIMIT 1
-        `
-
-        const [resultStore] = await connection.execute(sql_statement, [result[0].id])
-        result[0].store_id = resultStore[0].id
-        return result
-      } else {
-        const sql_statement = `
-          SELECT
-            store_id
-          FROM
-            cashier_stores
-          WHERE
-            user_id = ?
-          LIMIT 1
-        `
-
-        const [resultStore] = await connection.execute(sql_statement, [result[0].id])
-        result[0].store_id = resultStore[0].store_id
-        return result
-      }
+      return result
     }
 
     return []
@@ -163,4 +133,4 @@ const loginRepo = async (connection, email, password) => {
 }
 
 
-module.exports = { registerStoreRepo, addEmployeeRepo, loginRepo }
+module.exports = { addOwnerRepo, addEmployeeRepo, loginRepo }
