@@ -7,6 +7,8 @@ const getProducts = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     let { page, limit } = req.query
     page = parseInt(page) || 1
     limit = parseInt(limit) || 10
@@ -54,13 +56,15 @@ const addProductC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id, name, type, price, stock, unit } = req.body
-    const ingredient = []
+    let ingredient = null
 
 
     if (type === 'produk_olahan') {
       if (req.body.hasOwnProperty('ingredient')) {
-        ingredient.push(req.body.ingredient)
+        ingredient = req.body.ingredient
       } else {
         return res.status(400).json({
           'is_error': true,
@@ -70,6 +74,8 @@ const addProductC = async (req, res, next) => {
     }
 
     const result = await addProductRepo(connection, store_id, name, type, price, stock, unit, ingredient)
+    await connection.commit()
+
     return res.status(200).json({
       'is_error': false,
       'inserted_id': result

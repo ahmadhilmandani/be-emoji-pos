@@ -11,7 +11,7 @@ const allProdutcs = async (connection, limit, offset, type) => {
     sql_statement += ` LIMIT ? OFFSET ?`
 
     console.log(sql_statement)
-    
+
     sqlParams.push(limit.toString())
     sqlParams.push(offset.toString())
 
@@ -20,7 +20,7 @@ const allProdutcs = async (connection, limit, offset, type) => {
     const [result] = await connection.execute(sql_statement, sqlParams)
     return result
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
@@ -66,13 +66,32 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
           ?
         )
     `
-    const [result] = await connection.execute(sql_statement, [1, name, type, price, stock, unit])
+    const [result] = await connection.execute(sql_statement, [store_id, name, type, price, stock, unit])
     if (result && ingredient.length > 0) {
+      let param_sql_ingredient = []
+
+      for (let index = 0; index < ingredient.length; index++) {
+       param_sql_ingredient.push([result.insertId, ingredient[index].id, ingredient[index].qty])
+      }
+
+      console.log(ingredient)
+      console.log(param_sql_ingredient)
       
+      const sql_statement_product_ingredients = `
+        INSERT INTO
+          product_ingredients
+          (
+            product_id,
+            ingredient_id,
+            quantity
+          )
+        VALUES ?
+      `
+      const resultProdIngredient = await connection.query(sql_statement_product_ingredients, [param_sql_ingredient])
     }
     return result.insertId
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
 }
 
