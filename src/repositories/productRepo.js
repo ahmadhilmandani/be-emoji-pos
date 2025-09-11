@@ -1,3 +1,5 @@
+const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredientsRepo")
+
 const allProdutcs = async (connection, limit, offset, type) => {
   try {
     let sql_statement = `SELECT * FROM products`
@@ -71,12 +73,10 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
       let param_sql_ingredient = []
 
       for (let index = 0; index < ingredient.length; index++) {
-       param_sql_ingredient.push([result.insertId, ingredient[index].id, ingredient[index].qty])
+        param_sql_ingredient.push([result.insertId, ingredient[index].id, ingredient[index].qty])
+        await reduceStockIngredient(connection, ingredient[index])
       }
 
-      console.log(ingredient)
-      console.log(param_sql_ingredient)
-      
       const sql_statement_product_ingredients = `
         INSERT INTO
           product_ingredients
@@ -93,6 +93,16 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
   } catch (error) {
     throw error
   }
+}
+
+const reduceStockIngredient = async (connection, ingredient) => {
+  try {
+    const result = await getDetailIngredientsRepo(connection, ingredient.id)
+    const stock = result[0].stock - ingredient.qty
+    const resReduced = await updateIngredientRepo(connection, ingredient.name, stock, result[0].min_stock, ingredient.unit, ingredient.id)
+  } catch (error) {
+    throw error
+  } 
 }
 
 module.exports = { allProdutcs, detailSupplierRepo, addProductRepo }

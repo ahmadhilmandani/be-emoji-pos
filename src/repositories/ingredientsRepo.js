@@ -15,6 +15,29 @@ const allIngredientsRepo = async (connection, store_id, limit, offset) => {
   }
 }
 
+const getDetailIngredientsRepo = async (connection, ingredient_id) => {
+  try {
+    let sql_statement = `SELECT * FROM ingredients WHERE id = ?`
+    const sqlParams = [ingredient_id]
+
+    const [result] = await connection.execute(sql_statement, sqlParams)
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const updateIngredientRepo = async (connection, name, stock, min_stock, unit, id) => {
+  try {
+    let sql_statement = `UPDATE ingredients SET name = ?, stock = ?, min_stock = ?, unit = ? WHERE id = ? `
+
+    const [result] = await connection.execute(sql_statement, [name, stock, min_stock, unit, id])
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, unit) => {
   try {
     const sql_statement = `
@@ -43,4 +66,4 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
   }
 }
 
-module.exports = { allIngredientsRepo, addIngredientsRepo }
+module.exports = { allIngredientsRepo, addIngredientsRepo, getDetailIngredientsRepo, updateIngredientRepo }
