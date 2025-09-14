@@ -12,12 +12,8 @@ const allProdutcs = async (connection, limit, offset, type) => {
 
     sql_statement += ` LIMIT ? OFFSET ?`
 
-    console.log(sql_statement)
-
     sqlParams.push(limit.toString())
     sqlParams.push(offset.toString())
-
-    console.log(sqlParams)
 
     const [result] = await connection.execute(sql_statement, sqlParams)
     return result
@@ -45,7 +41,7 @@ const detailSupplierRepo = async (connection, id) => {
   }
 }
 
-const addProductRepo = async (connection, store_id, name, type, price, stock, unit, ingredient) => {
+const addProductRepo = async (connection, store_id, name, type, price, unit, ingredient) => {
   try {
     const sql_statement = `
       INSERT INTO
@@ -55,7 +51,6 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
           name,
           type,
           price,
-          stock,
           unit
         )
       VALUES
@@ -64,18 +59,16 @@ const addProductRepo = async (connection, store_id, name, type, price, stock, un
           ?,
           ?,
           ?,
-          ?,
           ?
         )
     `
-    const [result] = await connection.execute(sql_statement, [store_id, name, type, price, stock, unit])
-    if (result && ingredient.length > 0) {
+    const [result] = await connection.execute(sql_statement, [store_id, name, type, price, unit])
+    if (result && ingredient) {
       let param_sql_ingredient = []
 
-      for (let index = 0; index < ingredient.length; index++) {
-        param_sql_ingredient.push([result.insertId, ingredient[index].id, ingredient[index].qty])
-        await reduceStockIngredient(connection, ingredient[index])
-      }
+      ingredient?.forEach((val) => {
+        param_sql_ingredient.push([result.insertId, val.id, val.qty])
+      })
 
       const sql_statement_product_ingredients = `
         INSERT INTO
@@ -99,10 +92,13 @@ const reduceStockIngredient = async (connection, ingredient) => {
   try {
     const result = await getDetailIngredientsRepo(connection, ingredient.id)
     const stock = result[0].stock - ingredient.qty
+    if (stock < 0) {
+      throw new Error(`Stok ${result[0].name} tidak Cukup.`);
+    }
     const resReduced = await updateIngredientRepo(connection, ingredient.name, stock, result[0].min_stock, ingredient.unit, ingredient.id)
   } catch (error) {
     throw error
-  } 
+  }
 }
 
 module.exports = { allProdutcs, detailSupplierRepo, addProductRepo }
