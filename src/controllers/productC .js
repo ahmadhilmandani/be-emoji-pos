@@ -30,26 +30,26 @@ const getProducts = async (req, res, next) => {
   }
 }
 
-const getDetailSupplierC = async (req, res, next) => {
-  const pool = await connectDb()
-  const connection = await pool.getConnection()
+// const getDetailSupplierC = async (req, res, next) => {
+//   const pool = await connectDb()
+//   const connection = await pool.getConnection()
 
-  try {
-    const { id } = req.params
-    const result = await detailSupplierRepo(connection, id)
+//   try {
+//     const { id } = req.params
+//     const result = await detailSupplierRepo(connection, id)
 
-    return res.status(200).json({
-      'is_error': false,
-      'supplier': result
-    });
+//     return res.status(200).json({
+//       'is_error': false,
+//       'supplier': result
+//     });
 
-  } catch (error) {
-    await connection.rollback()
-    next(error)
-  } finally {
-    await connection.release()
-  }
-}
+//   } catch (error) {
+//     await connection.rollback()
+//     next(error)
+//   } finally {
+//     await connection.release()
+//   }
+// }
 
 const addProductC = async (req, res, next) => {
   const pool = await connectDb()
@@ -58,7 +58,7 @@ const addProductC = async (req, res, next) => {
   try {
     await connection.beginTransaction()
 
-    const { store_id, name, type, price, stock, unit } = req.body
+    const { store_id, name, type, price, unit } = req.body
     let ingredient = null
 
 
@@ -73,7 +73,7 @@ const addProductC = async (req, res, next) => {
       }
     }
 
-    const result = await addProductRepo(connection, store_id, name, type, price, stock, unit, ingredient)
+    const result = await addProductRepo(connection, store_id, name, type, price, unit, ingredient)
     await connection.commit()
 
     return res.status(200).json({
@@ -88,4 +88,4 @@ const addProductC = async (req, res, next) => {
   }
 }
 
-module.exports = { getProducts, getDetailSupplierC, addProductC }
+module.exports = { getProducts, addProductC }
