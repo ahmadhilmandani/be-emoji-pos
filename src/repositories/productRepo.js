@@ -1,26 +1,37 @@
 const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredientsRepo")
 
-const allProdutcs = async (connection, limit, offset, type) => {
+const allProdutcs = async (connection, limit, offset, store_id, type) => {
   try {
-    let sql_statement = `SELECT * FROM products`
-    const sqlParams = []
+    const sqlParams = [];
+    const sqlParts = [
+      `SELECT p.* ${type == "produk_fisik" ? ', pps.id AS phys_prod_id, pps.stock AS stock' : ''}`,
+      "FROM products AS p"
+    ]
 
-    if (type) {
-      sql_statement += ` WHERE type = ?`
-      sqlParams.push(type)
+    if (type === "produk_fisik") {
+      sqlParts.push("LEFT JOIN product_physical_stock AS pps ON p.id = pps.product_id");
     }
 
-    sql_statement += ` LIMIT ? OFFSET ?`
+    if (type) {
+      sqlParts.push("WHERE p.type = ? AND p.store_id = ?");
+      sqlParams.push(type, store_id);
+    } else {
+      sqlParts.push("WHERE p.store_id = ?");
+      sqlParams.push(store_id);
+    }
 
-    sqlParams.push(limit.toString())
-    sqlParams.push(offset.toString())
+    sqlParts.push("LIMIT ? OFFSET ?");
+    sqlParams.push(limit.toString(), offset.toString());
 
-    const [result] = await connection.execute(sql_statement, sqlParams)
-    return result
+    const sqlStatement = sqlParts.join(" ");
+    const [result] = await connection.execute(sqlStatement, sqlParams);
+
+    return result;
   } catch (error) {
     throw error
   }
-}
+};
+
 
 const detailSupplierRepo = async (connection, id) => {
   try {
@@ -41,7 +52,7 @@ const detailSupplierRepo = async (connection, id) => {
   }
 }
 
-const addProductRepo = async (connection, store_id, name, type, price, unit, ingredient) => {
+const addProductRepo = async (connection, store_id, name, type, phys_prod_min_stock, price, unit, ingredient) => {
   try {
     const sql_statement = `
       INSERT INTO
@@ -50,6 +61,7 @@ const addProductRepo = async (connection, store_id, name, type, price, unit, ing
           store_id,
           name,
           type,
+          phys_prod_min_stock,
           price,
           unit
         )
@@ -59,10 +71,11 @@ const addProductRepo = async (connection, store_id, name, type, price, unit, ing
           ?,
           ?,
           ?,
+          ?,
           ?
         )
     `
-    const [result] = await connection.execute(sql_statement, [store_id, name, type, price, unit])
+    const [result] = await connection.execute(sql_statement, [store_id, name, type, phys_prod_min_stock, price, unit])
     if (result && ingredient) {
       let param_sql_ingredient = []
 

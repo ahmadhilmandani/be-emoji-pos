@@ -9,9 +9,8 @@ const checkToken = async (req, res, next) => {
         'msg': "Silahkan Login Terlebih Dahulu!",
       })
     }
-
     const decodeToken = jwt.verify(token.replace('Bearer ', ''), "PASSWORD")
-
+    req.user = decodeToken.user
     next()
   } catch (error) {
     next(error)

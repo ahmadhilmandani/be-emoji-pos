@@ -9,13 +9,14 @@ const getProducts = async (req, res, next) => {
   try {
     await connection.beginTransaction()
 
+    const storeId = req.user.store_id
     let { page, limit } = req.query
     page = parseInt(page) || 1
     limit = parseInt(limit) || 10
     const offset = (page - 1) * limit
     const type = req.query?.type || null
 
-    const result = await allProdutcs(connection, limit, offset, type)
+    const result = await allProdutcs(connection, limit, offset, storeId, type)
 
     return res.status(200).json({
       'is_error': false,
@@ -58,7 +59,9 @@ const addProductC = async (req, res, next) => {
   try {
     await connection.beginTransaction()
 
-    const { store_id, name, type, price, unit } = req.body
+    const storeId = req.user.store_id
+    const { name, type, price, unit } = req.body
+    const phys_prod_min_stock = req.body?.phys_prod_min_stock || null
     let ingredient = null
 
 
@@ -73,7 +76,7 @@ const addProductC = async (req, res, next) => {
       }
     }
 
-    const result = await addProductRepo(connection, store_id, name, type, price, unit, ingredient)
+    const result = await addProductRepo(connection, storeId, name, type, phys_prod_min_stock, price, unit, ingredient)
     await connection.commit()
 
     return res.status(200).json({
