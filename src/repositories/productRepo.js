@@ -2,7 +2,7 @@ const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredient
 
 const allProdutcs = async (connection, limit, offset, store_id, type) => {
   try {
-    const sqlParams = [];
+    const sqlParams = []
     const sqlParts = [
       `SELECT p.* ${type == "produk_fisik" ? ', pps.id AS phys_prod_id, pps.stock AS stock' : ''}`,
       "FROM products AS p"
@@ -21,7 +21,7 @@ const allProdutcs = async (connection, limit, offset, store_id, type) => {
     }
 
     sqlParts.push("LIMIT ? OFFSET ?");
-    sqlParams.push(limit.toString(), offset.toString());
+    sqlParams.push(limit.toString(), offset.toString())
 
     const sqlStatement = sqlParts.join(" ");
     const [result] = await connection.execute(sqlStatement, sqlParams);
@@ -30,7 +30,7 @@ const allProdutcs = async (connection, limit, offset, store_id, type) => {
   } catch (error) {
     throw error
   }
-};
+}
 
 
 const detailSupplierRepo = async (connection, id) => {
@@ -76,24 +76,42 @@ const addProductRepo = async (connection, store_id, name, type, phys_prod_min_st
         )
     `
     const [result] = await connection.execute(sql_statement, [store_id, name, type, phys_prod_min_stock, price, unit])
-    if (result && ingredient) {
-      let param_sql_ingredient = []
+    if (result) {
+      if (type == 'produk_olahan') {
+        if (!ingredient || ingredient.length == 0) {
+          throw new Error("Sertakan Bahan Baku")
+        }
+        let param_sql_ingredient = []
 
-      ingredient?.forEach((val) => {
-        param_sql_ingredient.push([result.insertId, val.id, val.qty])
-      })
+        ingredient.forEach((val) => {
+          param_sql_ingredient.push([result.insertId, val.id, val.qty])
+        })
 
-      const sql_statement_product_ingredients = `
-        INSERT INTO
-          product_ingredients
-          (
-            product_id,
-            ingredient_id,
-            quantity
-          )
-        VALUES ?
-      `
-      const resultProdIngredient = await connection.query(sql_statement_product_ingredients, [param_sql_ingredient])
+        const sql_statement_product_ingredients = `
+          INSERT INTO
+            product_ingredients
+            (
+              product_id,
+              ingredient_id,
+              quantity
+            )
+          VALUES ?
+        `
+        const resultProdIngredient = await connection.query(sql_statement_product_ingredients, [param_sql_ingredient])
+      }
+
+      else if (type == 'produk_fisik') {
+        console.log('tika')
+        const sql_statement_phys_prod = [
+          "INSERT",
+          "INTO product_physical_stock (product_id, stock)",
+          "VALUES (?, ?)"
+        ]
+
+        const rawSql = sql_statement_phys_prod.join(" ")
+
+        await connection.execute(rawSql, [result.insertId, 0])
+      }
     }
     return result.insertId
   } catch (error) {
