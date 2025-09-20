@@ -106,9 +106,14 @@ const loginRepo = async (connection, email, password) => {
   try {
     const sql_statement = `
       SELECT
-        *
+        u.*,
+        s.name store_name
       FROM
-        users
+        users AS u
+      INNER JOIN
+        stores AS s
+      ON
+        u.store_id = s.id
       WHERE
         email = ?
       LIMIT 1
