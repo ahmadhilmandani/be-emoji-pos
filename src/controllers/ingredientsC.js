@@ -35,9 +35,9 @@ const addIngredients = async (req, res, next) => {
   try {
     const { store_id } = req.user
 
-    const { name, stock, min_stock, unit } = req.body
+    const { name, stock, min_stock, unit, price } = req.body
 
-    const result = await addIngredientsRepo(connection, store_id, name, stock, min_stock, unit)
+    const result = await addIngredientsRepo(connection, store_id, name, stock, min_stock, unit, price)
 
     return res.status(200).json({
       'is_error': false,
