@@ -70,6 +70,7 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
           ?,
           ?,
           ?,
+          ?,
           ?
         )
     `
