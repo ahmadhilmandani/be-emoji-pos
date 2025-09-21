@@ -1,8 +1,10 @@
 const express = require('express');
-const { getAllIngredients, addIngredients } = require('../controllers/ingredientsC');
+const { getAllIngredients, addIngredients, purchaseIngredient } = require('../controllers/ingredientsC');
+const { checkToken } = require('../middleware/authMiddleware');
 const router = express.Router()
 
-router.get('/', getAllIngredients)
-router.post('/', addIngredients)
+router.get('/', checkToken, getAllIngredients)
+router.post('/', checkToken, addIngredients)
+router.post('/purchase', checkToken, purchaseIngredient)
 
-  module.exports = router
+module.exports = router

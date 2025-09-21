@@ -38,6 +38,19 @@ const updateIngredientRepo = async (connection, name, stock, min_stock, unit, id
   }
 }
 
+const updateIngredientStockRepo = async (connection, ingredients) => {
+  try {
+    for (let index = 0; index < ingredients.length; index++) {
+      let sql_statement = `UPDATE ingredients SET stock = ? WHERE id = ? `
+      await connection.execute(sql_statement, [ingredients[index].current_stock + ingredients[index].stock, ingredients[index].id])
+    }
+
+    return "Success"
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, unit) => {
   try {
     const sql_statement = `
@@ -60,10 +73,21 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
         )
     `
     const [result] = await connection.execute(sql_statement, [store_id, name, stock, min_stock, unit])
+    // if (result) {
+    //   const sqlIngredientStock = [
+    //     "INSERT",
+    //     "INTO ingredient_stock (ingredient_id, stock)",
+    //     "VALUES (?, ?)",
+    //   ]
+      
+    //   const sqlIngredientStockJoin = sqlIngredientStock.join(" ")
+    //   const sqlParams = [result.insertId, 0]
+    //   await connection.execute(sqlIngredientStockJoin, sqlParams)
+    // }
     return result.insertId
   } catch (error) {
     throw error
   }
 }
 
-module.exports = { allIngredientsRepo, addIngredientsRepo, getDetailIngredientsRepo, updateIngredientRepo }
+module.exports = { allIngredientsRepo, addIngredientsRepo, getDetailIngredientsRepo, updateIngredientStockRepo, updateIngredientRepo }

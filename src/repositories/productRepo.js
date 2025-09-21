@@ -101,7 +101,6 @@ const addProductRepo = async (connection, store_id, name, type, phys_prod_min_st
       }
 
       else if (type == 'produk_fisik') {
-        console.log('tika')
         const sql_statement_phys_prod = [
           "INSERT",
           "INTO product_physical_stock (product_id, stock)",
@@ -119,17 +118,5 @@ const addProductRepo = async (connection, store_id, name, type, phys_prod_min_st
   }
 }
 
-const reduceStockIngredient = async (connection, ingredient) => {
-  try {
-    const result = await getDetailIngredientsRepo(connection, ingredient.id)
-    const stock = result[0].stock - ingredient.qty
-    if (stock < 0) {
-      throw new Error(`Stok ${result[0].name} tidak Cukup.`);
-    }
-    const resReduced = await updateIngredientRepo(connection, ingredient.name, stock, result[0].min_stock, ingredient.unit, ingredient.id)
-  } catch (error) {
-    throw error
-  }
-}
 
 module.exports = { allProdutcs, detailSupplierRepo, addProductRepo }

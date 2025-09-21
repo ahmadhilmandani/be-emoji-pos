@@ -52,9 +52,9 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
 
       const sqlPartUpdateStock = [
         `UPDATE`,
-        `${purchase_detail?.ingredient_id ? 'ingredient_stock' : 'product_physical_stock'}`,
+        `${purchase_detail?.ingredient_id ? 'ingredients' : 'product_physical_stock'}`,
         `SET stock = ?`,
-        `WHERE ${purchase_detail?.ingredient_id ? 'ingredient_id = ?' : 'product_id = ?'}`
+        `WHERE ${purchase_detail?.ingredient_id ? 'id = ?' : 'product_id = ?'}`
       ]
 
       const sqlParamsPurchaseDetail = []
@@ -62,7 +62,7 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
 
 
       for (let index = 0; index < purchase_detail.length; index++) {
-        sqlParamsPurchaseDetail.push([result.insertId, purchase_detail[index].ingredient_id || null, purchase_detail[index]?.phys_product_id, purchase_detail[index].quantity, purchase_detail[index].price, purchase_detail[index]?.discount || 0, purchase_detail[index].subtotal])
+        sqlParamsPurchaseDetail.push([result.insertId, purchase_detail[index].ingredient_id || null, purchase_detail[index]?.phys_product_id || null, purchase_detail[index].quantity, purchase_detail[index].price, purchase_detail[index]?.discount || 0, purchase_detail[index].subtotal])
 
         sqlParamUpdateStock = [Number(purchase_detail[index].current_qty) + Number(purchase_detail[index].quantity)]
         sqlParamUpdateStock.push(purchase_detail[index]?.ingredient_id ? purchase_detail[index].ingredient_id : purchase_detail[index].phys_product_id)
