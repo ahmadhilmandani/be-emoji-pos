@@ -1,7 +1,7 @@
 const ShortUniqueId = require("short-unique-id")
 const { randomUUID } = new ShortUniqueId({ length: 8 })
 
-const allPurchaseRepo = async (connection, store_id, limit, offset) => {
+const allPurchaseRepo = async (connection, store_id, limit, offset, type) => {
   try {
     const sqlStatement = [
       "SELECT p.id, p.purchase_code, p.store_id, p.total_amount, s.name supplier_name, s.phone supplier_phone",
@@ -9,6 +9,7 @@ const allPurchaseRepo = async (connection, store_id, limit, offset) => {
       "INNER JOIN suppliers AS s",
       "ON p.supplier_id = s.id",
       "WHERE p.store_id = ?",
+      "AND p.type = ?",
       "LIMIT ? OFFSET ?"
     ]
 
@@ -17,6 +18,7 @@ const allPurchaseRepo = async (connection, store_id, limit, offset) => {
     const sqlPart = sqlStatement.join(" ")
 
     sqlParams.push(store_id)
+    sqlParams.push(type)
     sqlParams.push(limit.toString())
     sqlParams.push(offset.toString())
 
@@ -27,7 +29,7 @@ const allPurchaseRepo = async (connection, store_id, limit, offset) => {
   }
 }
 
-const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, user_id, total_amount, purchase_detail, store_name) => {
+const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, user_id, total_amount, purchase_detail, store_name, type) => {
   try {
 
     const store_name_acronym = (store_name.match(/\p{L}+|\p{N}+/gu) || []).map(w => w[0].toUpperCase()).join('')
@@ -36,12 +38,12 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
 
     const sqlParts = [
       `INSERT`,
-      `INTO purchases (purchase_code, store_id, supplier_id, user_id, total_amount)`,
-      "VALUES (?, ?, ?, ?, ?)"
+      `INTO purchases (purchase_code, store_id, supplier_id, user_id, total_amount, type)`,
+      "VALUES (?, ?, ?, ?, ?, ?)"
     ]
 
     const sqlStatement = sqlParts.join(" ");
-    const [result] = await connection.execute(sqlStatement, [purchase_code, store_id, supplier_id, user_id, total_amount]);
+    const [result] = await connection.execute(sqlStatement, [purchase_code, store_id, supplier_id, user_id, total_amount, type]);
 
     if (result) {
       const sqlPartPurchaseDetail = [
@@ -52,9 +54,9 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
 
       const sqlPartUpdateStock = [
         `UPDATE`,
-        `${purchase_detail?.ingredient_id ? 'ingredients' : 'product_physical_stock'}`,
+        `${type == 'ingredient' ? 'ingredients' : 'product_physical_stock'}`,
         `SET stock = ?`,
-        `WHERE ${purchase_detail?.ingredient_id ? 'id = ?' : 'product_id = ?'}`
+        `WHERE ${type == 'ingredient' ? 'id = ?' : 'product_id = ?'}`
       ]
 
       const sqlParamsPurchaseDetail = []
@@ -73,7 +75,6 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
       }
 
       const sqlStatementPurchaseDetail = sqlPartPurchaseDetail.join(" ")
-      console.log(sqlParamsPurchaseDetail)
       await connection.query(sqlStatementPurchaseDetail, [sqlParamsPurchaseDetail])
 
     }

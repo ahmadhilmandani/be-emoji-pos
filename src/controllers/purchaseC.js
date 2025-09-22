@@ -7,12 +7,12 @@ const getAllPurchase = async (req, res, next) => {
 
   try {
     const { store_id } = req.user
-    let { page, limit } = req.query
+    let { page, limit, type } = req.query
     page = parseInt(page) || 1
     limit = parseInt(limit) || 10
     const offset = (page - 1) * limit
 
-    const result = await allPurchaseRepo(connection, store_id, limit, offset)
+    const result = await allPurchaseRepo(connection, store_id, limit, offset, type)
 
     return res.status(200).json({
       'is_error': false,
@@ -34,9 +34,9 @@ const addPurchaseWithDetails = async (req, res, next) => {
   try {
     await connection.beginTransaction()
     const { user_id, store_id, store_name } = req.user
-    const { supplier_id, total_amount, purchase_detail } = req.body
+    const { supplier_id, total_amount, purchase_detail, type } = req.body
 
-    const result = await addPurchaseWithDetailsRepo(connection, store_id, supplier_id, user_id, total_amount, purchase_detail, store_name)
+    const result = await addPurchaseWithDetailsRepo(connection, store_id, supplier_id, user_id, total_amount, purchase_detail, store_name, type)
 
     await connection.commit()
 
