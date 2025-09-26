@@ -18,8 +18,11 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
     sqlParamsOne.push(limit.toString(), offset.toString())
 
     const sqlStatementOne = sqlPartsOne.join(" ")
-    const [resultOne] = await connection.execute(sqlStatementOne, sqlParamsOne)
-
+    let [resultOne] = await connection.execute(sqlStatementOne, sqlParamsOne)
+    resultOne.forEach(val => {
+      val.stock = parseFloat(val.stock)
+      val.phys_prod_min_stock = parseFloat(val.phys_prod_min_stock)
+    })
     // Second Query for olahan
     const sqlParamsTwo = []
     const sqlPartsTwo = [
@@ -60,9 +63,9 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
 
         acc[item.name].ingredients.push({
           ingredient_name: item.ingredient_name,
-          quantity: item.quantity,
-          stock: item.stock,
-          min_stock: item.min_stock,
+          quantity: parseFloat(item.quantity),
+          stock: parseFloat(item.stock),
+          min_stock: parseFloat(item.min_stock),
           unit: item.ingredient_unit
         })
         return acc
