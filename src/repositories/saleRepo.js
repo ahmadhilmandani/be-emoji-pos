@@ -1,4 +1,8 @@
 const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredientsRepo")
+const ShortUniqueId = require("short-unique-id")
+
+
+const { randomUUID } = new ShortUniqueId({ length: 8 })
 
 const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, type) => {
   try {
@@ -26,7 +30,7 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
     // Second Query for olahan
     const sqlParamsTwo = []
     const sqlPartsTwo = [
-      `SELECT p.*, pi.quantity, i.name AS ingredient_name, i.stock, i.min_stock, i.unit AS ingredient_unit`,
+      `SELECT p.*, pi.quantity, i.id AS ingredient_id, i.name AS ingredient_name, i.stock, i.min_stock, i.unit AS ingredient_unit`,
       "FROM products AS p",
       "INNER JOIN product_ingredients AS pi",
       "ON p.id = pi.product_id",
@@ -62,6 +66,7 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
         }
 
         acc[item.name].ingredients.push({
+          id: item.ingredient_id,
           ingredient_name: item.ingredient_name,
           quantity: parseFloat(item.quantity),
           stock: parseFloat(item.stock),
@@ -71,7 +76,7 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
         return acc
       }, {})
     )
-    
+
     resultOne.push(...formatted)
 
     return resultOne
@@ -81,4 +86,65 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
 }
 
 
-module.exports = { getProductSalesCatalogRepo }
+const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount = null, emoji_discount = null, total_amount, paid_amount, change_amount, store_name) => {
+  try {
+
+    const store_name_acronym = (store_name.match(/\p{L}+|\p{N}+/gu) || []).map(w => w[0].toUpperCase()).join('')
+    const purchase_code = store_name_acronym + ' # ' + randomUUID()
+
+    const sqlPartSale = [
+      `INSERT`,
+      `INTO sales (store_id, invoice_number, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, total_amount, paid_amount, change_amount)`,
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ]
+    const sqlStatementSale = sqlPartSale.join(" ")
+
+    const [resSale] = await connection.execute(sqlStatementSale, [store_id, purchase_code, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, total_amount, paid_amount, change_amount])
+
+    const sqlPartSaleDetail = [
+      `INSERT`,
+      `INTO sales_details (sale_id, product_id, quantity, price, subtotal)`,
+      "VALUES ?"
+    ]
+
+    const sqlParamsSaleDetail = []
+
+    const sqlUpdateStockIngredient = `UPDATE ingredients SET stock = ? where id = ?`
+    const sqlUpdateStocProdPhysStock = `UPDATE product_physical_stock SET stock = ? where product_id = ?`
+
+    for (const val of sales) {
+      sqlParamsSaleDetail.push([resSale.insertId, val.id, val.used_product_qty, val.price, val.price * val.used_product_qty])
+
+      if (val.type == 'produk_olahan') {
+        for (const ingredient of val.ingredients) {
+          if ((ingredient.stock - (ingredient.quantity * val.used_product_qty)) < ingredient.min_stock) {
+            res.status(400).json({
+              'is_error': true,
+              'msg': "stock kurang"
+            })
+          }
+          await connection.execute(sqlUpdateStockIngredient, [ingredient.stock - (ingredient.quantity * val.used_product_qty), ingredient.id])
+
+        }
+      } else if (val.type == 'produk_fisik') {
+
+        if ((val.current_stock - val.used_product_qty) < val.min_stock) {
+          res.status(400).json({
+            'is_error': true,
+            'msg': "stock kurang"
+          })
+        }
+        await connection.execute(sqlUpdateStocProdPhysStock, [val.current_stock - val.used_product_qty, val.id])
+      }
+    }
+    const sqlStatementSaleDetail = sqlPartSaleDetail.join(" ")
+    await connection.query(sqlStatementSaleDetail, [sqlParamsSaleDetail])
+    return resSale.insertId
+
+  } catch (error) {
+    throw error
+  }
+}
+
+
+module.exports = { getProductSalesCatalogRepo, postSaleRepo }
