@@ -86,7 +86,7 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
 }
 
 
-const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount = null, emoji_discount = null, total_amount, paid_amount, change_amount, store_name) => {
+const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount = null, emoji_discount = null, undiscount_total_amount, final_total_amount, paid_amount, change_amount, store_name) => {
   try {
 
     const store_name_acronym = (store_name.match(/\p{L}+|\p{N}+/gu) || []).map(w => w[0].toUpperCase()).join('')
@@ -94,12 +94,12 @@ const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discou
 
     const sqlPartSale = [
       `INSERT`,
-      `INTO sales (store_id, invoice_number, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, total_amount, paid_amount, change_amount)`,
-      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      `INTO sales (store_id, invoice_number, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, undiscount_total_amount, final_total_amount, paid_amount, change_amount)`,
+      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ]
     const sqlStatementSale = sqlPartSale.join(" ")
 
-    const [resSale] = await connection.execute(sqlStatementSale, [store_id, purchase_code, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, total_amount, paid_amount, change_amount])
+    const [resSale] = await connection.execute(sqlStatementSale, [store_id, purchase_code, user_id, reguler_discount, emoji_percentage_discount, emoji_discount, undiscount_total_amount, final_total_amount, paid_amount, change_amount])
 
     const sqlPartSaleDetail = [
       `INSERT`,
@@ -117,22 +117,16 @@ const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discou
 
       if (val.type == 'produk_olahan') {
         for (const ingredient of val.ingredients) {
-          if ((ingredient.stock - (ingredient.quantity * val.used_product_qty)) < ingredient.min_stock) {
-            res.status(400).json({
-              'is_error': true,
-              'msg': "stock kurang"
-            })
+          if ((ingredient.stock - (ingredient.quantity * val.used_product_qty)) < 0) {
+            throw new Error("stock kurang")
           }
           await connection.execute(sqlUpdateStockIngredient, [ingredient.stock - (ingredient.quantity * val.used_product_qty), ingredient.id])
 
         }
       } else if (val.type == 'produk_fisik') {
 
-        if ((val.current_stock - val.used_product_qty) < val.min_stock) {
-          res.status(400).json({
-            'is_error': true,
-            'msg': "stock kurang"
-          })
+        if ((val.current_stock - val.used_product_qty) < 0) {
+          throw new Error("stock kurang")
         }
         await connection.execute(sqlUpdateStocProdPhysStock, [val.current_stock - val.used_product_qty, val.id])
       }
