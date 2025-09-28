@@ -85,6 +85,38 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
   }
 }
 
+const getSalesHistoryRepo = async (connection, page = 1, limit = 10, store_id) => {
+  try {
+    const offset = (page - 1) * limit;
+
+    const sqlCount = `SELECT COUNT(*) as total FROM sales`;
+    const [countResult] = await connection.execute(sqlCount);
+    const totalData = countResult[0].total;
+    const totalPages = Math.ceil(totalData / limit);
+
+    const sql = `
+      SELECT s.id, s.invoice_number, s.user_id, s.final_total_amount, s.paid_amount, s.change_amount, 
+             s.created_at, u.name as cashier_name
+      FROM sales s
+      INNER JOIN users u ON u.id = s.user_id
+      WHERE s.store_id = ? 
+      ORDER BY s.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const [rows] = await connection.execute(sql, [store_id, limit.toString(), offset.toString()]);
+
+    return {
+      currentPage: page,
+      totalPages,
+      totalData,
+      sales: rows
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount = null, emoji_discount = null, undiscount_total_amount, final_total_amount, paid_amount, change_amount, store_name) => {
   try {
@@ -141,4 +173,4 @@ const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discou
 }
 
 
-module.exports = { getProductSalesCatalogRepo, postSaleRepo }
+module.exports = { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo }

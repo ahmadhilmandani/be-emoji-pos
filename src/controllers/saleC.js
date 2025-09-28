@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { getProductSalesCatalogRepo, postSaleRepo } = require("../repositories/saleRepo")
+const { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo } = require("../repositories/saleRepo")
 
 const getProductSalesCatalog = async (req, res, next) => {
   const pool = await connectDb()
@@ -29,6 +29,36 @@ const getProductSalesCatalog = async (req, res, next) => {
   }
 }
 
+const getSalesHistor = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+    const { store_id } = req.user
+    const limit = req.params.limit || 10
+    const page = req.params.page || 1
+
+    const result = await getSalesHistoryRepo(connection, page, limit, store_id)
+    
+    return res.status(200).json({
+      'is_error': false,
+      'current_page': result.currentPage,
+      'total_pages': result.totalPages,
+      'total_data': result.totalData,
+      'sales': result.sales
+    })
+
+
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
 const postSale = async (req, res, next) => {
   const pool = await connectDb()
   const connection = await pool.getConnection()
@@ -38,7 +68,7 @@ const postSale = async (req, res, next) => {
 
     const { store_id, user_id, store_name } = req.user
     const { sales, reguler_discount, emoji_percentage_discount, emoji_discount, undiscount_total_amount, final_total_amount, paid_amount, change_amount } = req.body
-    
+
     const result = await postSaleRepo(connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount, emoji_discount, undiscount_total_amount, final_total_amount, paid_amount, change_amount, store_name)
     await connection.commit()
 
@@ -56,4 +86,4 @@ const postSale = async (req, res, next) => {
   }
 }
 
-module.exports = { getProductSalesCatalog, postSale }
+module.exports = { getProductSalesCatalog, postSale, getSalesHistor }
