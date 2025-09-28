@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo } = require("../repositories/saleRepo")
+const { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo, getSaleDetailRepo } = require("../repositories/saleRepo")
 
 const getProductSalesCatalog = async (req, res, next) => {
   const pool = await connectDb()
@@ -37,8 +37,8 @@ const getSalesHistor = async (req, res, next) => {
     await connection.beginTransaction()
 
     const { store_id } = req.user
-    const limit = req.params.limit || 10
-    const page = req.params.page || 1
+    const limit = req.query.limit || 10
+    const page = req.query.page || 1
 
     const result = await getSalesHistoryRepo(connection, page, limit, store_id)
     
@@ -48,6 +48,32 @@ const getSalesHistor = async (req, res, next) => {
       'total_pages': result.totalPages,
       'total_data': result.totalData,
       'sales': result.sales
+    })
+
+
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+const getSakeHistoryDetail = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+    const { id } = req.params
+    console.log(id)
+
+    const result = await getSaleDetailRepo(connection, id)
+    
+    return res.status(200).json({
+      'is_error': false,
+      'sale': result
     })
 
 
@@ -86,4 +112,4 @@ const postSale = async (req, res, next) => {
   }
 }
 
-module.exports = { getProductSalesCatalog, postSale, getSalesHistor }
+module.exports = { getProductSalesCatalog, postSale, getSalesHistor, getSakeHistoryDetail }

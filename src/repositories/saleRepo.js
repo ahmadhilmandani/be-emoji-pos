@@ -89,33 +89,70 @@ const getSalesHistoryRepo = async (connection, page = 1, limit = 10, store_id) =
   try {
     const offset = (page - 1) * limit;
 
-    const sqlCount = `SELECT COUNT(*) as total FROM sales`;
-    const [countResult] = await connection.execute(sqlCount);
-    const totalData = countResult[0].total;
-    const totalPages = Math.ceil(totalData / limit);
+    const sqlCount = `SELECT COUNT(*) as total FROM sales`
+    const [countResult] = await connection.execute(sqlCount)
+    const totalData = countResult[0].total
+    const totalPages = Math.ceil(totalData / limit)
 
     const sql = `
-      SELECT s.id, s.invoice_number, s.user_id, s.final_total_amount, s.paid_amount, s.change_amount, 
+      SELECT s.id, s.invoice_number, s.user_id, s.reguler_discount, s.emoji_percentage_discount, 
+             s.emoji_discount, s.undiscount_total_amount, s.final_total_amount, s.paid_amount, s.change_amount, 
              s.created_at, u.name as cashier_name
       FROM sales s
       INNER JOIN users u ON u.id = s.user_id
       WHERE s.store_id = ? 
       ORDER BY s.created_at DESC
       LIMIT ? OFFSET ?
-    `;
+    `
 
-    const [rows] = await connection.execute(sql, [store_id, limit.toString(), offset.toString()]);
+    const [rows] = await connection.execute(sql, [store_id, limit.toString(), offset.toString()])
 
     return {
       currentPage: page,
       totalPages,
       totalData,
       sales: rows
-    };
+    }
   } catch (error) {
-    throw error;
+    throw error
   }
-};
+}
+
+const getSaleDetailRepo = async (connection, sale_id) => {
+  try {
+    const sqlSale = `
+      SELECT s.id, s.invoice_number, s.reguler_discount, s.emoji_percentage_discount, 
+             s.emoji_discount, s.undiscount_total_amount, s.final_total_amount, 
+             s.paid_amount, s.change_amount, s.created_at,
+             u.name as cashier_name, u.user_role as user_role, u.phone as user_phone,  st.name as store_name
+      FROM sales s
+      INNER JOIN users u ON u.id = s.user_id
+      INNER JOIN stores st ON st.id = s.store_id
+      WHERE s.id = ?
+    `;
+    const [saleRows] = await connection.execute(sqlSale, [sale_id])
+    if (saleRows.length === 0) {
+      throw new Error("Sale not found")
+    }
+    const sale = saleRows[0];
+
+    const sqlSaleDetails = `
+      SELECT sd.id, sd.product_id, p.name as product_name, sd.quantity, sd.price, sd.subtotal
+      FROM sales_details sd
+      LEFT JOIN products p ON p.id = sd.product_id
+      WHERE sd.sale_id = ?
+    `;
+    const [detailRows] = await connection.execute(sqlSaleDetails, [sale_id])
+
+    return {
+      ...sale,
+      items: detailRows
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
 
 
 const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discount, emoji_percentage_discount = null, emoji_discount = null, undiscount_total_amount, final_total_amount, paid_amount, change_amount, store_name) => {
@@ -173,4 +210,4 @@ const postSaleRepo = async (connection, store_id, user_id, sales, reguler_discou
 }
 
 
-module.exports = { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo }
+module.exports = { getProductSalesCatalogRepo, postSaleRepo, getSalesHistoryRepo, getSaleDetailRepo }
