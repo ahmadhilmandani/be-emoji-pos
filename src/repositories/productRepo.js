@@ -33,24 +33,48 @@ const allProdutcs = async (connection, limit, offset, store_id, type) => {
 }
 
 
-const detailSupplierRepo = async (connection, id) => {
+const getProductDetailRepo = async (connection, product_id) => {
   try {
-    const sql_statement = `
-      SELECT
-        *
-      FROM
-        supplier
-      WHERE
-        id = ?
-      LIMIT
-        1
-    `
-    const [result] = await connection.execute(sql_statement, [id])
-    return result
+    const sqlPartsProduct = [
+      "SELECT p.id, p.store_id, p.name, p.type, p.phys_prod_min_stock, p.price, p.unit",
+      "FROM products p",
+      "WHERE p.id = ?"
+    ]
+    const sqlStatementProduct = sqlPartsProduct.join(" ")
+
+    const [productRows] = await connection.execute(sqlStatementProduct, [product_id])
+    if (productRows.length === 0) {
+      throw new Error("Product not found")
+    }
+    const product = productRows[0]
+
+    if (product.type === "produk_olahan") {
+      const sqlPartsIngredient = [
+        "SELECT pi.ingredient_id, i.name as ingredient_name, pi.quantity, i.stock",
+        "FROM product_ingredients pi",
+        "JOIN ingredients i ON i.id = pi.ingredient_id",
+        "WHERE pi.product_id = ?"
+      ]
+      const sqlStatementIngredient = sqlPartsIngredient.join(" ")
+      const [ingredientRows] = await connection.execute(sqlStatementIngredient, [product_id])
+      product.ingredients = ingredientRows
+    } else if (product.type === "produk_fisik") {
+      const sqlPartsStock = [
+        "SELECT stock",
+        "FROM product_physical_stock",
+        "WHERE product_id = ?"
+      ]
+      const sqlStatementStock = sqlPartsStock.join(" ")
+      const [stockRows] = await connection.execute(sqlStatementStock, [product_id])
+      product.stock = stockRows.length > 0 ? stockRows[0].stock : 0
+    }
+
+    return product
   } catch (error) {
-    throw new Error(error)
+    throw error
   }
-}
+};
+
 
 const addProductRepo = async (connection, store_id, name, type, phys_prod_min_stock, price, unit, ingredient) => {
   try {
@@ -119,4 +143,64 @@ const addProductRepo = async (connection, store_id, name, type, phys_prod_min_st
 }
 
 
-module.exports = { allProdutcs, detailSupplierRepo, addProductRepo }
+const updateProductRepo = async (connection, product_id, name, type, phys_prod_min_stock, price, unit, ingredient) => {
+  try {
+    const sqlPartsUpdate = [
+      "UPDATE products",
+      "SET name = ?, type = ?, phys_prod_min_stock = ?, price = ?, unit = ?",
+      "WHERE id = ?"
+    ]
+    const sqlStatementUpdate = sqlPartsUpdate.join(" ")
+    await connection.execute(sqlStatementUpdate, [name, type, phys_prod_min_stock, price, unit, product_id])
+
+    if (type === "produk_olahan") {
+      const sqlPartsDeleteIng = [
+        "DELETE FROM product_ingredients",
+        "WHERE product_id = ?"
+      ]
+      const sqlStatementDeleteIng = sqlPartsDeleteIng.join(" ")
+      await connection.execute(sqlStatementDeleteIng, [product_id])
+
+      if (!ingredient || ingredient.length === 0) {
+        throw new Error("Sertakan Bahan Baku")
+      }
+
+      const paramSqlIngredient = ingredient.map(val => [product_id, val.id, val.qty])
+
+      const sqlPartsInsertIng = [
+        "INSERT INTO product_ingredients",
+        "(product_id, ingredient_id, quantity)",
+        "VALUES ?"
+      ]
+      const sqlStatementInsertIng = sqlPartsInsertIng.join(" ")
+      await connection.query(sqlStatementInsertIng, [paramSqlIngredient])
+
+    } else if (type === "produk_fisik") {
+      const sqlPartsCheckStock = [
+        "SELECT id",
+        "FROM product_physical_stock",
+        "WHERE product_id = ?"
+      ]
+      const sqlStatementCheckStock = sqlPartsCheckStock.join(" ")
+      const [rows] = await connection.execute(sqlStatementCheckStock, [product_id])
+
+      if (rows.length === 0) {
+        const sqlPartsInsertStock = [
+          "INSERT INTO product_physical_stock",
+          "(product_id, stock)",
+          "VALUES (?, ?)"
+        ]
+        const sqlStatementInsertStock = sqlPartsInsertStock.join(" ")
+        await connection.execute(sqlStatementInsertStock, [product_id, 0])
+      }
+    }
+
+    return true
+  } catch (error) {
+    throw error
+  }
+}
+
+
+
+module.exports = { allProdutcs, addProductRepo, getProductDetailRepo, updateProductRepo }
