@@ -63,7 +63,9 @@ const updateProductC = async (req, res, next) => {
     await connection.beginTransaction()
 
     let { product_id } = req.params
-    const {name, type, phys_prod_min_stock, price, unit, ingredient} = req.body
+    const { name, type, price, unit } = req.body
+    const phys_prod_min_stock = req.body.phys_prod_min_stock || null
+    const ingredient = req.body.ingredient || null
 
     const result = await updateProductRepo(connection, product_id, name, type, phys_prod_min_stock, price, unit, ingredient || [])
 
