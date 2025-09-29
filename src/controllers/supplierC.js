@@ -1,11 +1,13 @@
 const connectDb = require("../config/db")
-const { addSupplierRepo, detailSupplierRepo, allSupplierRepo } = require("../repositories/supplierRepo")
+const { addSupplierRepo, detailSupplierRepo, allSupplierRepo, updateSupplierRepo } = require("../repositories/supplierRepo")
 
 const getAllSupplierC = async (req, res, next) => {
   const pool = await connectDb()
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id } = req.user
     let { page, limit } = req.query
     page = parseInt(page) || 1
@@ -30,13 +32,15 @@ const getDetailSupplierC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id } = req.user
     const { id } = req.params
     const result = await detailSupplierRepo(connection, id, store_id)
 
     return res.status(200).json({
       'is_error': false,
-      'supplier': result
+      'supplier': result[0]
     });
 
   } catch (error) {
@@ -52,6 +56,8 @@ const addSupplierC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id } = req.user
     const { name, phone, address } = req.body
     const result = await addSupplierRepo(connection, store_id, name, phone, address)
@@ -67,4 +73,28 @@ const addSupplierC = async (req, res, next) => {
   }
 }
 
-module.exports = { getAllSupplierC, getDetailSupplierC, addSupplierC }
+const updateSupplier = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+    const { id } = req.params
+    const { store_id } = req.user
+    const { name, phone, address } = req.body
+    
+    const result = await updateSupplierRepo(connection, id, store_id, name, phone, address)
+    return res.status(200).send({
+      'is_error': false,
+      'effected_rows': result
+    })
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+module.exports = { getAllSupplierC, getDetailSupplierC, addSupplierC, updateSupplier }

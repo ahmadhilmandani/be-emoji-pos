@@ -23,7 +23,7 @@ const detailSupplierRepo = async (connection, id, store_id) => {
       SELECT
         *
       FROM
-        supplier
+        suppliers
       WHERE
         id = ?
       AND
@@ -64,4 +64,33 @@ const addSupplierRepo = async (connection, store_id, name, phone, address) => {
   }
 }
 
-module.exports = { allSupplierRepo, detailSupplierRepo, addSupplierRepo }
+const updateSupplierRepo = async (connection, supplier_id, store_id, name, phone, address) => {
+  try {
+    const sql_statement = `
+      UPDATE
+        suppliers
+      SET
+        store_id = ?,
+        name = ?,
+        phone = ?,
+        address = ?
+      WHERE
+        id = ?
+    `
+
+    const [result] = await connection.execute(sql_statement, [
+      store_id,
+      name,
+      phone,
+      address,
+      supplier_id
+    ])
+
+    return result.affectedRows
+  } catch (error) {
+    throw error
+  }
+}
+
+
+module.exports = { allSupplierRepo, detailSupplierRepo, addSupplierRepo, updateSupplierRepo }
