@@ -29,6 +29,33 @@ const allPurchaseRepo = async (connection, store_id, limit, offset, type) => {
   }
 }
 
+const getPurchaseWithDetailsRepo = async (connection, store_id, purchase_id, type) => {
+  try {
+    const sqlParts = [
+      `SELECT`,
+      `p.id AS purchase_id, p.purchase_code, p.total_amount, p.type, p.created_at,`,
+      `pd.id AS purchase_detail_id, pd.ingredient_id, pd.phys_product_id, pd.quantity, pd.price, pd.discount, pd.subtotal,`,
+      `${type === 'ingredient' ? 'i.name AS item_name, i.stock' : 'p2.name AS item_name'}`,
+      `FROM purchases p`,
+      `INNER JOIN purchase_details pd ON pd.purchase_id = p.id`,
+      `${type === 'ingredient'
+        ? 'INNER JOIN ingredients i ON i.id = pd.ingredient_id'
+        : 'INNER JOIN products p2 ON p2.id = pd.phys_product_id'}`,
+      `WHERE p.id = ?`,
+      `AND p.store_id = ?`
+    ]
+
+    const sqlStatement = sqlParts.join(" ");
+    const [result] = await connection.execute(sqlStatement, [purchase_id, store_id])
+    console.log(result)
+
+    return result;
+  } catch (error) {
+    throw error
+  }
+};
+
+
 const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, user_id, total_amount, purchase_detail, store_name, type) => {
   try {
 
@@ -71,18 +98,16 @@ const addPurchaseWithDetailsRepo = async (connection, store_id, supplier_id, use
 
         const sqlStatementUpdateStock = sqlPartUpdateStock.join(" ")
         await connection.execute(sqlStatementUpdateStock, sqlParamUpdateStock)
-
       }
 
       const sqlStatementPurchaseDetail = sqlPartPurchaseDetail.join(" ")
       await connection.query(sqlStatementPurchaseDetail, [sqlParamsPurchaseDetail])
-
     }
 
-    return result;
+    return result
   } catch (error) {
     throw error
   }
 }
 
-module.exports = { addPurchaseWithDetailsRepo, allPurchaseRepo }
+module.exports = { addPurchaseWithDetailsRepo, allPurchaseRepo, getPurchaseWithDetailsRepo }

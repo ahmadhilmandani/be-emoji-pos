@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { addPurchaseWithDetailsRepo, allPurchaseRepo } = require("../repositories/purchaseRepo")
+const { addPurchaseWithDetailsRepo, allPurchaseRepo, updatePurchaseWithDetailsRepo, getPurchaseWithDetailsRepo } = require("../repositories/purchaseRepo")
 
 const getAllPurchase = async (req, res, next) => {
   const pool = await connectDb()
@@ -17,6 +17,30 @@ const getAllPurchase = async (req, res, next) => {
     return res.status(200).json({
       'is_error': false,
       'purchases': result
+    })
+
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+const getPurchaseWithDetails = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    const { store_id} = req.user
+    const { purchase_id } = req.params
+    const { type } = req.query
+
+    const result = await getPurchaseWithDetailsRepo(connection, store_id, purchase_id, type)
+
+    return res.status(200).json({
+      'is_error': false,
+      'purchase': result
     })
 
   } catch (error) {
@@ -52,4 +76,4 @@ const addPurchaseWithDetails = async (req, res, next) => {
   }
 }
 
-module.exports = { addPurchaseWithDetails, getAllPurchase }
+module.exports = { addPurchaseWithDetails, getAllPurchase, getPurchaseWithDetails }
