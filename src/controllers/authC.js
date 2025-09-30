@@ -12,8 +12,9 @@ const addOwnerStoreC = async (req, res, next) => {
     const age = req.body?.age
     const sex = req.body?.sex
     const phone = req.body?.phone
+    const percentage_max_emoji_disc = req.body.percentage_max_emoji_disc || 0
 
-    const result = await addOwnerRepo(connection, email, name, password, age, sex, phone, store_name, store_address, store_phone)
+    const result = await addOwnerRepo(connection, email, name, password, age, sex, phone, store_name, store_address, percentage_max_emoji_disc, store_phone)
 
     await connection.commit()
 
