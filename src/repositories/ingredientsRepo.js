@@ -62,7 +62,8 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
           stock,
           min_stock,
           unit,
-          price
+          price,
+          is_delete
         )
       VALUES
         (
@@ -71,10 +72,11 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
           ?,
           ?,
           ?,
+          ?,
           ?
         )
     `
-    const [result] = await connection.execute(sql_statement, [store_id, name, stock, min_stock, unit, price])
+    const [result] = await connection.execute(sql_statement, [store_id, name, stock, min_stock, unit, price, 0])
     // if (result) {
     //   const sqlIngredientStock = [
     //     "INSERT",
