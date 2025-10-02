@@ -7,10 +7,12 @@ const getAllIngredients = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id } = req.user
     let { page, limit } = req.query
     page = parseInt(page) || 1
-    limit = parseInt(limit) || 10
+    limit = parseInt(limit) || 50
     const offset = (page - 1) * limit
 
     const result = await allIngredientsRepo(connection, store_id, limit, offset)
@@ -33,11 +35,16 @@ const addIngredients = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { store_id } = req.user
 
     const { name, stock, min_stock, unit, price } = req.body
 
     const result = await addIngredientsRepo(connection, store_id, name, stock, min_stock, unit, price)
+
+    await connection.commit()
+
 
     return res.status(200).json({
       'is_error': false,
@@ -57,9 +64,13 @@ const purchaseIngredient = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
-    const { ingredients } = req.body
+    await connection.beginTransaction()
 
+    const { ingredients } = req.body
+    
     const result = await updateIngredientStockRepo(connection, ingredients)
+
+    await connection.commit()
 
     return res.status(200).json({
       'is_error': false,

@@ -111,6 +111,7 @@ const addProductRepo = async (connection, store_id, name, type, phys_prod_min_st
           param_sql_ingredient.push([result.insertId, val.id, val.qty])
         })
 
+
         const sql_statement_product_ingredients = `
           INSERT INTO
             product_ingredients
@@ -155,7 +156,8 @@ const updateProductRepo = async (connection, product_id, name, type, phys_prod_m
 
     if (type === "produk_olahan") {
       const sqlPartsDeleteIng = [
-        "DELETE FROM product_ingredients",
+        "UPDATE product_ingredients",
+        "SET is_delete = 1",
         "WHERE product_id = ?"
       ]
       const sqlStatementDeleteIng = sqlPartsDeleteIng.join(" ")
@@ -165,11 +167,11 @@ const updateProductRepo = async (connection, product_id, name, type, phys_prod_m
         throw new Error("Sertakan Bahan Baku")
       }
 
-      const paramSqlIngredient = ingredient.map(val => [product_id, val.id, val.qty])
+      const paramSqlIngredient = ingredient.map(val => [product_id, val.id, val.qty, 0])
 
       const sqlPartsInsertIng = [
         "INSERT INTO product_ingredients",
-        "(product_id, ingredient_id, quantity)",
+        "(product_id, ingredient_id, quantity, is_delete)",
         "VALUES ?"
       ]
       const sqlStatementInsertIng = sqlPartsInsertIng.join(" ")
