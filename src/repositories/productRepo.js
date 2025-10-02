@@ -1,5 +1,3 @@
-const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredientsRepo")
-
 const allProdutcs = async (connection, limit, offset, store_id, type) => {
   try {
     const sqlParams = []

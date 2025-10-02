@@ -1,4 +1,3 @@
-const { getDetailIngredientsRepo, updateIngredientRepo } = require("./ingredientsRepo")
 const ShortUniqueId = require("short-unique-id")
 
 
