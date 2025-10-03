@@ -71,7 +71,8 @@ const loginC = async (req, res, next) => {
       email: getUser[0].email,
       role: getUser[0].user_role,
       store_id: getUser[0].store_id,
-      store_name: getUser[0].store_name
+      store_name: getUser[0].store_name,
+      percentage_max_emoji_disc: getUser[0].percentage_max_emoji_disc
     }
 
     const token = jwt.sign({ user: result }, "PASSWORD", { expiresIn: 86400 })

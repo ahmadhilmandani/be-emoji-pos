@@ -109,7 +109,8 @@ const loginRepo = async (connection, email, password) => {
     const sql_statement = `
       SELECT
         u.*,
-        s.name store_name
+        s.name store_name,
+        s.percentage_max_emoji_disc percentage_max_emoji_disc
       FROM
         users AS u
       INNER JOIN
