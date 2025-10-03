@@ -104,6 +104,63 @@ const addEmployeeRepo = async (connection, name, email, password, storeId, userR
 }
 
 
+const updateEmployeeRepo = async (connection, userId, name, email, password, userRole, age, sex, phone) => {
+  try {
+    let arrSql = [
+      `UPDATE users`,
+      `SET name = ?, email = ?, user_role = ?, age = ?, sex = ?, phone = ?`
+    ]
+    const params = [name, email, userRole, age, sex, phone]
+
+    if (password) {
+      const saltRounds = 10
+      const hashedPassword = await bcrypt.hash(password, saltRounds)
+      arrSql = [
+        `UPDATE users`,
+        `SET name = ?, email = ?, user_role = ?, age = ?, sex = ?, phone = ?, password = ?`
+      ]
+      params.splice(2, 0, hashedPassword)
+    }
+
+    arrSql.push(`WHERE id = ?`)
+    params.push(userId)
+
+    const sqlStatement = arrSql.join(" ")
+
+    const [result] = await connection.execute(sqlStatement, params)
+
+    if (result.affectedRows === 0) {
+      throw new Error("Employee not found or no changes applied")
+    }
+
+    return { message: "Employee updated successfully" }
+  } catch (error) {
+    throw error
+  }
+}
+
+
+const softDeleteEmployeeRepo = async (connection, userId) => {
+  try {
+    const arrSql = [
+      `UPDATE users`,
+      `SET is_delete = 0`,
+      `WHERE id = ?`
+    ]
+    const sqlStatement = arrSql.join(" ")
+
+    const [result] = await connection.execute(sqlStatement, [userId])
+
+    if (result.affectedRows === 0) {
+      throw new Error("Employee not found or already deleted")
+    }
+
+    return { message: "Employee soft deleted successfully" }
+  } catch (error) {
+    throw error
+  }
+}
+
 const loginRepo = async (connection, email, password) => {
   try {
     const sql_statement = `
@@ -141,4 +198,4 @@ const loginRepo = async (connection, email, password) => {
 }
 
 
-module.exports = { addOwnerRepo, addEmployeeRepo, loginRepo }
+module.exports = { addOwnerRepo, addEmployeeRepo, loginRepo, updateEmployeeRepo, softDeleteEmployeeRepo }

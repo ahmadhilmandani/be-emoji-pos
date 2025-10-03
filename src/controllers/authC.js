@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { loginRepo, addEmployeeRepo, addOwnerRepo } = require("../repositories/authRepo")
+const { loginRepo, addEmployeeRepo, addOwnerRepo, updateEmployeeRepo } = require("../repositories/authRepo")
 const jwt = require('jsonwebtoken')
 
 
@@ -49,6 +49,42 @@ const addEmployeeC = async (req, res, next) => {
   }
 }
 
+
+const updateEmployeeC = async (req, res) => {
+  const { id } = req.params
+  const { user_id, role } = req.user
+  const { name, email, password, userRole, age, sex, phone } = req.body
+
+  try {
+    if ((user_id !== id) && (role !== 'owner')) {
+      throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
+    }
+    const connection = await getConnection()
+    const result = await updateEmployeeRepo(connection, id, name, email, password, userRole, age, sex, phone)
+    res.status(200).json(result)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+
+const softDeleEmployeeC = async (req, res) => {
+  const { id } = req.params
+  const { user_id, role } = req.user
+
+  try {
+    if ((user_id !== id) && (role !== 'owner')) {
+      throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
+    }
+    const connection = await getConnection()
+    const result = await softDeleteEmployeeRepo(connection, id)
+    res.status(200).json(result)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+
 const loginC = async (req, res, next) => {
   const pool = await connectDb()
   const connection = await pool.getConnection()
@@ -93,4 +129,4 @@ const loginC = async (req, res, next) => {
   }
 }
 
-module.exports = { addOwnerStoreC, addEmployeeC, loginC }
+module.exports = { addOwnerStoreC, addEmployeeC, loginC, updateEmployeeC, softDeleEmployeeC }
