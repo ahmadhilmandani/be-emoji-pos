@@ -8,6 +8,8 @@ const userInfoRoute = require('./src/routes/userInfoRoute');
 const purchaseRoute = require('./src/routes/purchaseRoute');
 const ingredientsRoute = require('./src/routes/ingredientsRoute')
 const saleRoute = require('./src/routes/saleRoute')
+const storeRoute = require('./src/routes/storeRoute')
+
 const { errorHanlder } = require('./src/middleware/errorHanlder');
 const { log } = require('./src/middleware/log');
 
@@ -25,6 +27,7 @@ app.use('/api/user-info', userInfoRoute)
 app.use('/api/ingredients', ingredientsRoute)
 app.use('/api/purchase', purchaseRoute)
 app.use('/api/sale', saleRoute)
+app.use('/api/store', storeRoute)
 
 app.use(errorHanlder)
 
