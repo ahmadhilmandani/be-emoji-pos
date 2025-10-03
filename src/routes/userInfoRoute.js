@@ -1,9 +1,10 @@
 const express = require('express');
 const { getAllUserInfo } = require('../controllers/userInfoC');
+const { checkToken } = require('../middleware/authMiddleware');
 
 const router = express.Router()
 
-router.get('/', getAllUserInfo)
+router.get('/', checkToken, getAllUserInfo)
 
 // router.post('/', getAllUserInfo)
 

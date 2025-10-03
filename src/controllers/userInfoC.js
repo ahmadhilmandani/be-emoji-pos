@@ -7,7 +7,8 @@ const getAllUserInfo = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
-    let { page, limit, store_id } = req.query
+    const { store_id } = req.user
+    let { page, limit } = req.query
     page = parseInt(page) || 1
     limit = parseInt(limit) || 10
     const offset = (page - 1) * limit
