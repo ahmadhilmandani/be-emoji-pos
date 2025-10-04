@@ -68,7 +68,7 @@ const addOwnerRepo = async (connection, email, name, password, age, sex, phone, 
 }
 
 
-const addEmployeeRepo = async (connection, name, email, password, storeId, userRole) => {
+const addEmployeeRepo = async (connection, name, email, password, storeId, userRole, age, sex, phone) => {
   try {
     const saltRounds = 10
 
@@ -80,10 +80,16 @@ const addEmployeeRepo = async (connection, name, email, password, storeId, userR
           email, 
           password,
           store_id,
-          user_role
+          user_role,
+          age,
+          sex,
+          phone
         )
       VALUES
         (
+          ?,
+          ?,
+          ?,
           ?,
           ?,
           ?,
@@ -94,7 +100,7 @@ const addEmployeeRepo = async (connection, name, email, password, storeId, userR
     const hashedPassword = await bcrypt.hash(password, saltRounds)
 
     if (hashedPassword) {
-      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, storeId, userRole])
+      const [result] = await connection.execute(sql_statement, [name, email, hashedPassword, storeId, userRole, age, sex, phone])
       
       return result.insertId
     }

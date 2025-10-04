@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { loginRepo, addEmployeeRepo, addOwnerRepo, updateEmployeeRepo } = require("../repositories/authRepo")
+const { loginRepo, addEmployeeRepo, addOwnerRepo, updateEmployeeRepo, softDeleteEmployeeRepo } = require("../repositories/authRepo")
 const jwt = require('jsonwebtoken')
 
 
@@ -33,9 +33,9 @@ const addEmployeeC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
-    const { email, name, password, store_id, user_role } = req.body
+    const { email, name, password, store_id, user_role, phone, age, sex } = req.body
 
-    const result = await addEmployeeRepo(connection, name, email, password, store_id, user_role)
+    const result = await addEmployeeRepo(connection, name, email, password, store_id, user_role, age, sex, phone)
 
     await connection.commit()
 
@@ -53,17 +53,20 @@ const addEmployeeC = async (req, res, next) => {
 const updateEmployeeC = async (req, res) => {
   const { id } = req.params
   const { user_id, role } = req.user
-  const { name, email, password, userRole, age, sex, phone } = req.body
+  const { name, email, user_role, age, sex, phone } = req.body
+  const password = req.body.password || null
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
     if ((user_id !== id) && (role !== 'owner')) {
       throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
     }
-    const connection = await getConnection()
-    const result = await updateEmployeeRepo(connection, id, name, email, password, userRole, age, sex, phone)
-    res.status(200).json(result)
+    const result = await updateEmployeeRepo(connection, id, name, email, password, user_role, age, sex, phone)
+    return res.status(200).json(result)
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    next(error)
+
   }
 }
 
@@ -71,16 +74,17 @@ const updateEmployeeC = async (req, res) => {
 const softDeleEmployeeC = async (req, res) => {
   const { id } = req.params
   const { user_id, role } = req.user
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
 
   try {
     if ((user_id !== id) && (role !== 'owner')) {
       throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
     }
-    const connection = await getConnection()
     const result = await softDeleteEmployeeRepo(connection, id)
-    res.status(200).json(result)
+    return res.status(200).json(result)
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    next(error)
   }
 }
 

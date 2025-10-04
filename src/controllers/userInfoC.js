@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { allUserInfo } = require("../repositories/userInfoRepo")
+const { allUserInfo, getUserDetailRepo } = require("../repositories/userInfoRepo")
 
 
 const getAllUserInfo = async (req, res, next) => {
@@ -29,4 +29,28 @@ const getAllUserInfo = async (req, res, next) => {
   }
 }
 
-module.exports = { getAllUserInfo }
+
+const getDetailUserC = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    const { id } = req.params
+    const { store_id } = req.user
+
+    const result = await getUserDetailRepo(connection, id, store_id)
+
+    return res.status(200).json({
+      'is_error': false,
+      'users_info': result
+    })
+
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+module.exports = { getAllUserInfo, getDetailUserC }
