@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { addProductRepo, allProdutcs, getProductDetailRepo, updateProductRepo } = require("../repositories/productRepo")
+const { addProductRepo, allProdutcs, getProductDetailRepo, updateProductRepo, softDeleteProductRepo } = require("../repositories/productRepo")
 const { addSupplierRepo, detailSupplierRepo } = require("../repositories/supplierRepo")
 
 const getProducts = async (req, res, next) => {
@@ -31,6 +31,7 @@ const getProducts = async (req, res, next) => {
   }
 }
 
+
 const getProductDetail = async (req, res, next) => {
   const pool = await connectDb()
   const connection = await pool.getConnection()
@@ -54,6 +55,7 @@ const getProductDetail = async (req, res, next) => {
     await connection.release()
   }
 }
+
 
 const updateProductC = async (req, res, next) => {
   const pool = await connectDb()
@@ -122,4 +124,28 @@ const addProductC = async (req, res, next) => {
   }
 }
 
-module.exports = { getProducts, addProductC, getProductDetail, updateProductC }
+
+const softDeleteProduct = async (req, res) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+    const { id } = req.params
+    const result = await softDeleteProductRepo(connection, id)
+
+    await connection.commit()
+    return res.status(200).json(result)
+  } catch (error) {
+    await connection.rollback()
+
+    next(error)
+  }
+  finally {
+    await connection.release()
+  }
+}
+
+
+module.exports = { getProducts, addProductC, getProductDetail, updateProductC, softDeleteProduct }

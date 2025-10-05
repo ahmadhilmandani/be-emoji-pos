@@ -11,15 +11,15 @@ const allProdutcs = async (connection, limit, offset, store_id, type) => {
     }
 
     if (type) {
-      sqlParts.push("WHERE p.type = ? AND p.store_id = ?");
+      sqlParts.push("WHERE p.type = ? AND p.store_id = ? AND p.is_delete = 0");
       sqlParams.push(type, store_id);
     } else {
-      sqlParts.push("WHERE p.store_id = ?");
+      sqlParts.push("WHERE p.store_id = ? AND p.is_delete = 0");
       sqlParams.push(store_id);
     }
 
-    sqlParts.push("LIMIT ? OFFSET ?");
-    sqlParams.push(limit.toString(), offset.toString())
+    // sqlParts.push("LIMIT ? OFFSET ?");
+    // sqlParams.push(limit.toString(), offset.toString())
 
     const sqlStatement = sqlParts.join(" ");
     const [result] = await connection.execute(sqlStatement, sqlParams);
@@ -201,6 +201,25 @@ const updateProductRepo = async (connection, product_id, name, type, phys_prod_m
   }
 }
 
+const softDeleteProductRepo = async (connection, productId) => {
+  try {
+    const arrSql = [
+      `UPDATE products`,
+      `SET is_delete = 1`,
+      `WHERE id = ? AND is_delete = 0`
+    ]
+    const sqlStatement = arrSql.join(" ")
 
+    const [result] = await connection.execute(sqlStatement, [productId])
 
-module.exports = { allProdutcs, addProductRepo, getProductDetailRepo, updateProductRepo }
+    if (result.affectedRows === 0) {
+      throw new Error("Product not found or already deleted")
+    }
+
+    return { message: "Product soft deleted successfully" }
+  } catch (error) {
+    throw error
+  }
+}
+
+module.exports = { allProdutcs, addProductRepo, getProductDetailRepo, updateProductRepo, softDeleteProductRepo }
