@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { addSupplierRepo, detailSupplierRepo, allSupplierRepo, updateSupplierRepo } = require("../repositories/supplierRepo")
+const { addSupplierRepo, detailSupplierRepo, allSupplierRepo, updateSupplierRepo, softDeleteSupplierRepo } = require("../repositories/supplierRepo")
 
 const getAllSupplierC = async (req, res, next) => {
   const pool = await connectDb()
@@ -83,8 +83,9 @@ const updateSupplier = async (req, res, next) => {
     const { id } = req.params
     const { store_id } = req.user
     const { name, phone, address } = req.body
-    
+
     const result = await updateSupplierRepo(connection, id, store_id, name, phone, address)
+    await connection.commit()
     return res.status(200).send({
       'is_error': false,
       'effected_rows': result
@@ -97,4 +98,26 @@ const updateSupplier = async (req, res, next) => {
   }
 }
 
-module.exports = { getAllSupplierC, getDetailSupplierC, addSupplierC, updateSupplier }
+
+const softDeleteSupplier = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+    const { id } = req.params
+    const { store_id } = req.user
+
+    const result = await softDeleteSupplierRepo(connection, id, store_id)
+    await connection.commit()
+
+    return res.status(200).json(result)
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+module.exports = { getAllSupplierC, getDetailSupplierC, addSupplierC, updateSupplier, softDeleteSupplier }

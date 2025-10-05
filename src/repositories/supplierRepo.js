@@ -7,10 +7,10 @@ const allSupplierRepo = async (connection, limit, offset, store_id) => {
         suppliers
       WHERE
         store_id =?
-      LIMIT ?
-      OFFSET ?
+      AND is_delete = 0
     `
-    const [result] = await connection.execute(sql_statement, [store_id, limit.toString(), offset.toString()])
+    
+    const [result] = await connection.execute(sql_statement, [store_id])
     return result
   } catch (error) {
     throw error
@@ -93,4 +93,25 @@ const updateSupplierRepo = async (connection, supplier_id, store_id, name, phone
 }
 
 
-module.exports = { allSupplierRepo, detailSupplierRepo, addSupplierRepo, updateSupplierRepo }
+const softDeleteSupplierRepo = async (connection, supplierId, storeId) => {
+  try {
+    const arrSql = [
+      `UPDATE suppliers`,
+      `SET is_delete = 1`,
+      `WHERE id = ? AND is_delete = 0 AND store_id = ?`
+    ]
+    const sqlStatement = arrSql.join(" ")
+
+    const [result] = await connection.execute(sqlStatement, [supplierId, storeId])
+
+    if (result.affectedRows === 0) {
+      throw new Error("Supplier not found or already deleted")
+    }
+
+    return { message: "Supplier soft deleted successfully" }
+  } catch (error) {
+    throw error
+  }
+}
+
+module.exports = { allSupplierRepo, detailSupplierRepo, addSupplierRepo, updateSupplierRepo, softDeleteSupplierRepo }
