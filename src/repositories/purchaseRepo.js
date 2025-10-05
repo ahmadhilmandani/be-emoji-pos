@@ -9,8 +9,8 @@ const allPurchaseRepo = async (connection, store_id, limit, offset, type) => {
       "INNER JOIN suppliers AS s",
       "ON p.supplier_id = s.id",
       "WHERE p.store_id = ?",
-      "AND p.type = ?",
-      "LIMIT ? OFFSET ?"
+      "AND p.type = ?"
+      // "LIMIT ? OFFSET ?"
     ]
 
     const sqlParams = []
@@ -19,8 +19,8 @@ const allPurchaseRepo = async (connection, store_id, limit, offset, type) => {
 
     sqlParams.push(store_id)
     sqlParams.push(type)
-    sqlParams.push(limit.toString())
-    sqlParams.push(offset.toString())
+    // sqlParams.push(limit.toString())
+    // sqlParams.push(offset.toString())
 
     const [result] = await connection.execute(sqlPart, sqlParams)
     return result
@@ -35,7 +35,7 @@ const getPurchaseWithDetailsRepo = async (connection, store_id, purchase_id, typ
       `SELECT`,
       `p.id AS purchase_id, p.purchase_code, p.total_amount, p.type, p.created_at,`,
       `pd.id AS purchase_detail_id, pd.ingredient_id, pd.phys_product_id, pd.quantity, pd.price, pd.discount, pd.subtotal,`,
-      `${type === 'ingredient' ? 'i.name AS item_name, i.stock' : 'p2.name AS item_name'}`,
+      `${type === 'ingredient' ? 'i.name AS item_name, i.stock, i.is_delete item_is_delete' : 'p2.name AS item_name, p2.is_delete item_is_delete'}`,
       `FROM purchases p`,
       `INNER JOIN purchase_details pd ON pd.purchase_id = p.id`,
       `${type === 'ingredient'
