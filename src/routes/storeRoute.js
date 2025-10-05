@@ -5,6 +5,6 @@ const { getDetailStore, updateStore } = require('../controllers/storeC')
 const router = express.Router()
 
 router.get('/', checkToken, getDetailStore)
-router.put('/:id', checkToken, updateStore)
+router.put('/', checkToken, updateStore)
 
 module.exports = router

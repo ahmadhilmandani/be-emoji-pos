@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { getStoreDetailRepo } = require("../repositories/storeRepo")
+const { getStoreDetailRepo, updateStoreRepo } = require("../repositories/storeRepo")
 
 
 const getDetailStore = async (req, res, next) => {
@@ -9,9 +9,9 @@ const getDetailStore = async (req, res, next) => {
   try {
     await connection.beginTransaction()
 
-    const { id } = req.params
+    const { store_id } = req.user
 
-    const result = await getStoreDetailRepo(connection, id)
+    const result = await getStoreDetailRepo(connection, store_id)
     return res.status(200).json({
       'is_error': false,
       'store': result
@@ -37,11 +37,11 @@ const updateStore = async (req, res, next) => {
 
     await connection.beginTransaction()
 
-    const { id } = req.params
+    const { store_id } = req.user
     const { name, address, phone, percentage_max_emoji_disc } = req.body
     const updated_at = new Date()
 
-    const result = await updateStoreRepo(connection, id, name, address, phone, percentage_max_emoji_disc, updated_at)
+    const result = await updateStoreRepo(connection, store_id, name, address, phone, percentage_max_emoji_disc, updated_at)
     return res.status(200).send({
       'is_error': false,
       'msg': result
