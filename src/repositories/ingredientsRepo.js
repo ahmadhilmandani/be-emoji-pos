@@ -1,12 +1,12 @@
 const allIngredientsRepo = async (connection, store_id, limit, offset) => {
   try {
-    let sql_statement = `SELECT * FROM ingredients WHERE store_id = ?`
+    let sql_statement = `SELECT * FROM ingredients WHERE store_id = ? AND is_delete = 0`
     const sqlParams = [store_id]
 
-    sql_statement += ` LIMIT ? OFFSET ?`
+    // sql_statement += ` LIMIT ? OFFSET ?`
 
-    sqlParams.push(limit.toString())
-    sqlParams.push(offset.toString())
+    // sqlParams.push(limit.toString())
+    // sqlParams.push(offset.toString())
 
     const [result] = await connection.execute(sql_statement, sqlParams)
     return result
@@ -94,4 +94,15 @@ const addIngredientsRepo = async (connection, store_id, name, stock, min_stock, 
   }
 }
 
-module.exports = { allIngredientsRepo, addIngredientsRepo, getDetailIngredientsRepo, updateIngredientStockRepo, updateIngredientRepo }
+const softDeleteIngredientRepo = async (connection, id, store_id) => {
+  try {
+    let sql_statement = `UPDATE ingredients SET is_delete = 1 WHERE store_id = ? AND id = ? `
+
+    const [result] = await connection.execute(sql_statement, [store_id, id])
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+module.exports = { allIngredientsRepo, addIngredientsRepo, getDetailIngredientsRepo, updateIngredientStockRepo, updateIngredientRepo, softDeleteIngredientRepo }

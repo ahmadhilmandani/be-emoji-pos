@@ -1,5 +1,5 @@
 const connectDb = require("../config/db")
-const { allIngredientsRepo, addIngredientsRepo, updateIngredientStockRepo, updateIngredientRepo, getDetailIngredientsRepo } = require("../repositories/ingredientsRepo")
+const { allIngredientsRepo, addIngredientsRepo, updateIngredientStockRepo, updateIngredientRepo, getDetailIngredientsRepo, softDeleteIngredientRepo } = require("../repositories/ingredientsRepo")
 
 
 const getAllIngredients = async (req, res, next) => {
@@ -130,8 +130,38 @@ const updateIngredient = async (req, res, next) => {
       'msg': 'berhasil'
     })
   } catch (error) {
-
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
   }
 }
 
-module.exports = { getAllIngredients, addIngredients, purchaseIngredient, updateIngredient, getDetailIngredients }
+
+const softDeleteIngredient = async (req, res, next) => {
+  const pool = await connectDb()
+  const connection = await pool.getConnection()
+
+  try {
+    await connection.beginTransaction()
+
+
+    const { id } = req.params
+    const { store_id } = req.user
+
+    await softDeleteIngredientRepo(connection, id, store_id)
+    await connection.commit()
+
+    return res.status(200).json({
+      'is_error': false,
+      'msg': 'berhasil'
+    })
+  } catch (error) {
+    await connection.rollback()
+    next(error)
+  } finally {
+    await connection.release()
+  }
+}
+
+module.exports = { getAllIngredients, addIngredients, purchaseIngredient, updateIngredient, getDetailIngredients, softDeleteIngredient }

@@ -13,12 +13,13 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
       "LEFT JOIN product_physical_stock AS pps",
       "ON p.id = pps.product_id",
       "WHERE (p.type = 'produk_fisik' OR p.type = 'layanan')",
-      "AND p.store_id = ?"
+      "AND p.store_id = ?",
+      "AND p.is_delete = 0"
     ]
 
     sqlParamsOne.push(store_id)
-    sqlPartsOne.push("LIMIT ? OFFSET ?")
-    sqlParamsOne.push(limit.toString(), offset.toString())
+    // sqlPartsOne.push("LIMIT ? OFFSET ?")
+    // sqlParamsOne.push(limit.toString(), offset.toString())
 
     const sqlStatementOne = sqlPartsOne.join(" ")
     let [resultOne] = await connection.execute(sqlStatementOne, sqlParamsOne)
@@ -36,12 +37,14 @@ const getProductSalesCatalogRepo = async (connection, limit, offset, store_id, t
       "INNER JOIN ingredients AS i",
       "ON pi.ingredient_id = i.id",
       "WHERE type = 'produk_olahan'",
-      "AND p.store_id = ?"
+      "AND p.store_id = ?",
+      "AND p.is_delete = 0",
+      "AND i.is_delete = 0"
     ]
 
     sqlParamsTwo.push(store_id)
-    sqlPartsTwo.push("LIMIT ? OFFSET ?")
-    sqlParamsTwo.push(limit.toString(), offset.toString())
+    // sqlPartsTwo.push("LIMIT ? OFFSET ?")
+    // sqlParamsTwo.push(limit.toString(), offset.toString())
 
 
     const sqlStatementTwo = sqlPartsTwo.join(" ")
@@ -101,10 +104,9 @@ const getSalesHistoryRepo = async (connection, page = 1, limit = 10, store_id) =
       INNER JOIN users u ON u.id = s.user_id
       WHERE s.store_id = ? 
       ORDER BY s.created_at DESC
-      LIMIT ? OFFSET ?
     `
 
-    const [rows] = await connection.execute(sql, [store_id, limit.toString(), offset.toString()])
+    const [rows] = await connection.execute(sql, [store_id])
 
     return {
       currentPage: page,
@@ -136,7 +138,7 @@ const getSaleDetailRepo = async (connection, sale_id) => {
     const sale = saleRows[0];
 
     const sqlSaleDetails = `
-      SELECT sd.id, sd.product_id, p.name as product_name, sd.quantity, sd.price, sd.subtotal
+      SELECT sd.id, sd.product_id, p.name as product_name, sd.quantity, sd.price, sd.subtotal, p.is_delete item_is_delete
       FROM sales_details sd
       LEFT JOIN products p ON p.id = sd.product_id
       WHERE sd.sale_id = ?

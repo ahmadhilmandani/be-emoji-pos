@@ -51,7 +51,8 @@ const getProductDetailRepo = async (connection, product_id) => {
         "SELECT pi.ingredient_id, i.name as ingredient_name, pi.quantity, i.stock",
         "FROM product_ingredients pi",
         "JOIN ingredients i ON i.id = pi.ingredient_id",
-        "WHERE pi.product_id = ?"
+        "WHERE pi.product_id = ?",
+        "AND i.is_delete = 0"
       ]
       const sqlStatementIngredient = sqlPartsIngredient.join(" ")
       const [ingredientRows] = await connection.execute(sqlStatementIngredient, [product_id])
