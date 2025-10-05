@@ -146,16 +146,17 @@ const updateEmployeeRepo = async (connection, userId, name, email, password, use
 }
 
 
-const softDeleteEmployeeRepo = async (connection, userId) => {
+const softDeleteEmployeeRepo = async (connection, userId, storeId) => {
   try {
     const arrSql = [
       `UPDATE users`,
-      `SET is_delete = 0`,
-      `WHERE id = ?`
+      `SET is_delete = 1`,
+      `WHERE id = ?`,
+      `AND store_id = ?`,
     ]
     const sqlStatement = arrSql.join(" ")
 
-    const [result] = await connection.execute(sqlStatement, [userId])
+    const [result] = await connection.execute(sqlStatement, [userId, storeId])
 
     if (result.affectedRows === 0) {
       throw new Error("Employee not found or already deleted")

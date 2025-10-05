@@ -8,6 +8,8 @@ const addOwnerStoreC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { email, name, password, store_name, store_address, store_phone } = req.body
     const age = req.body?.age
     const sex = req.body?.sex
@@ -33,6 +35,8 @@ const addEmployeeC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { email, name, password, store_id, user_role, phone, age, sex } = req.body
 
     const result = await addEmployeeRepo(connection, name, email, password, store_id, user_role, age, sex, phone)
@@ -59,6 +63,8 @@ const updateEmployeeC = async (req, res) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     if ((user_id !== id) && (role !== 'owner')) {
       throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
     }
@@ -71,20 +77,27 @@ const updateEmployeeC = async (req, res) => {
 }
 
 
-const softDeleEmployeeC = async (req, res) => {
+const softDeleEmployeeC = async (req, res, next) => {
   const { id } = req.params
-  const { user_id, role } = req.user
+  const { user_id, role, store_id } = req.user
   const pool = await connectDb()
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     if ((user_id !== id) && (role !== 'owner')) {
       throw new Error("Anda Tidak Memiliki Wewenang Untuk Ubah Data Karyawan")
     }
-    const result = await softDeleteEmployeeRepo(connection, id)
+    const result = await softDeleteEmployeeRepo(connection, id, store_id)
+    await connection.commit()
+
     return res.status(200).json(result)
   } catch (error) {
+    await connection.rollback()
     next(error)
+  } finally {
+    await connection.release()
   }
 }
 
@@ -94,6 +107,8 @@ const loginC = async (req, res, next) => {
   const connection = await pool.getConnection()
 
   try {
+    await connection.beginTransaction()
+
     const { email, password } = req.body
 
     const getUser = await loginRepo(connection, email, password)
