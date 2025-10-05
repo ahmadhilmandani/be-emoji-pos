@@ -4,7 +4,7 @@ const { randomUUID } = new ShortUniqueId({ length: 8 })
 const allPurchaseRepo = async (connection, store_id, limit, offset, type) => {
   try {
     const sqlStatement = [
-      "SELECT p.id, p.purchase_code, p.store_id, p.total_amount, s.name supplier_name, s.phone supplier_phone",
+      "SELECT p.id, p.purchase_code, p.store_id, p.total_amount, s.name supplier_name, s.phone supplier_phone, s.is_delete supplier_is_delete",
       "FROM purchases AS p",
       "INNER JOIN suppliers AS s",
       "ON p.supplier_id = s.id",
