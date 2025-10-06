@@ -16,7 +16,7 @@ const { log } = require('./src/middleware/log');
 const app = express()
 
 app.use(cors({
-  origin: 'https://fe-sea-catering.netlify.app',
+  origin: 'https://emoji-pos.netlify.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }))
